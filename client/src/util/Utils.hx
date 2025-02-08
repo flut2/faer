@@ -546,19 +546,7 @@ class XmlUtil {
 		return xml != null ? Std.parseFloat(xml.firstChild().nodeValue) : defaultValue;
 	}
 
-	public static #if !hl #if !tracing inline #end #end function intListElement(xml: Xml, elemName: String): Array<Int32> {
-		#if hl
-		var list: Array<Int32> = [];
-		if (!elementExists(xml, elemName))
-			return list;
-
-		for (child in xml.elementsNamed(elemName))
-			for (str in value(child).split(","))
-				list.push(cast(Std.parseInt(str), Int32));
-
-		return list;
-		#end
-
+	public static #if !tracing inline #end function intListElement(xml: Xml, elemName: String): Array<Int32> {
 		return xml.elementsNamed(elemName)
 			.hasNext() ? xml.elementsNamed(elemName)
 			.next()
@@ -567,19 +555,7 @@ class XmlUtil {
 			.map(x -> cast(Std.parseInt(x), Int32)) : new Array<Int32>();
 	}
 
-	public static #if !hl #if !tracing inline #end #end function floatListElement(xml: Xml, elemName: String): Array<Float32> {
-		#if hl
-		var list: Array<Float32> = [];
-		if (!elementExists(xml, elemName))
-			return list;
-
-		for (child in xml.elementsNamed(elemName))
-			for (str in value(child).split(","))
-				list.push(cast(Std.parseFloat(str), Float32));
-
-		return list;
-		#end
-
+	public static #if !tracing inline #end function floatListElement(xml: Xml, elemName: String): Array<Float32> {
 		return xml.elementsNamed(elemName)
 			.hasNext() ? xml.elementsNamed(elemName)
 			.next()
