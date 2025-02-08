@@ -497,8 +497,8 @@ class Map {
 		square.tileType = tileType;
 		square.props = GroundLibrary.propsLibrary.get(tileType);
 		var texData = GroundLibrary.typeToTextureData.get(tileType).getTextureData();
-		square.baseU = texData.uValue;
-		square.baseV = texData.vValue;
+		square.baseU = texData.uValue + Main.PADDING / Main.ATLAS_WIDTH;
+		square.baseV = texData.vValue + Main.PADDING / Main.ATLAS_HEIGHT;
 		var animationsData = GroundLibrary.typeToAnimationsData.get(tileType);
 		if (animationsData != null)
 			square.animations = new Animations(animationsData);
@@ -736,8 +736,8 @@ class Map {
 			if (square.animations != null) {
 				var rect = square.animations.getTexture(time);
 				if (rect != null) {
-					square.baseU = (rect.x + 2) / Main.ATLAS_WIDTH;
-					square.baseV = (rect.y + 2) / Main.ATLAS_WIDTH;
+					square.baseU = (rect.x + Main.PADDING) / Main.ATLAS_WIDTH;
+					square.baseV = (rect.y + Main.PADDING) / Main.ATLAS_WIDTH;
 					updateBlends(square.x, square.y, square);
 				}
 			}

@@ -1,13 +1,13 @@
 package objects;
 
-import util.BinPacker.Rect;
-import util.NativeTypes;
 import haxe.ds.IntMap;
 import openfl.display.BitmapData;
 import util.AnimatedChar;
 import util.AnimatedChars;
 import util.AssetLibrary;
+import util.BinPacker.Rect;
 import util.MaskedImage;
+import util.NativeTypes;
 
 using util.Utils;
 
@@ -89,33 +89,19 @@ class TextureData {
 				var sheet = xml.element("Sheet");
 				this.texture = AssetLibrary.getImageFromSet(sheet, index);
 				this.rect = AssetLibrary.getRectFromSet(sheet, index);
-				if (sheet == "ground") {
-					this.uValue = (this.rect.x + Main.PADDING) / Main.ATLAS_WIDTH;
-					this.vValue = (this.rect.y + Main.PADDING) / Main.ATLAS_HEIGHT;
-					this.width = this.rect.width / Main.ATLAS_WIDTH;
-					this.height = this.rect.height / Main.ATLAS_HEIGHT;
-				} else {
-					this.uValue = this.rect.x / Main.ATLAS_WIDTH;
-					this.vValue = this.rect.y / Main.ATLAS_HEIGHT;
-					this.width = this.rect.width / Main.ATLAS_WIDTH;
-					this.height = this.rect.height / Main.ATLAS_HEIGHT;
-				}
+				this.uValue = this.rect.x / Main.ATLAS_WIDTH;
+				this.vValue = this.rect.y / Main.ATLAS_HEIGHT;
+				this.width = this.rect.width / Main.ATLAS_WIDTH;
+				this.height = this.rect.height / Main.ATLAS_HEIGHT;
 			case "Mask":
 				var index = xml.intElement("Index");
 				var sheet = xml.element("Sheet");
 				this.mask = AssetLibrary.getImageFromSet(sheet, index);
 				this.rect = AssetLibrary.getRectFromSet(sheet, index);
-				if (sheet == "ground") {
-					this.uValue = (this.rect.x + Main.PADDING) / Main.ATLAS_WIDTH;
-					this.vValue = (this.rect.y + Main.PADDING) / Main.ATLAS_HEIGHT;
-					this.width = this.rect.width / Main.ATLAS_WIDTH;
-					this.height = this.rect.height / Main.ATLAS_HEIGHT;
-				} else {
-					this.uValue = this.rect.x / Main.ATLAS_WIDTH;
-					this.vValue = this.rect.y / Main.ATLAS_HEIGHT;
-					this.width = this.rect.width / Main.ATLAS_WIDTH;
-					this.height = this.rect.height / Main.ATLAS_HEIGHT;
-				}
+				this.uValue = this.rect.x / Main.ATLAS_WIDTH;
+				this.vValue = this.rect.y / Main.ATLAS_HEIGHT;
+				this.width = this.rect.width / Main.ATLAS_WIDTH;
+				this.height = this.rect.height / Main.ATLAS_HEIGHT;
 			case "AnimatedTexture":
 				this.animatedChar = AnimatedChars.getAnimatedChar(xml.element("Sheet"), xml.intElement("Index"));
 				if (this.animatedChar != null) {
