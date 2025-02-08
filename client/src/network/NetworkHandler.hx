@@ -1,37 +1,37 @@
 package network;
 
-import objects.particles.HealEffect;
-import objects.particles.FlowEffect;
-import objects.particles.NovaEffect;
-import objects.particles.LineEffect;
-import objects.particles.StreamEffect;
-import objects.particles.TeleportEffect;
-import objects.particles.AOEEffect;
-import objects.particles.ThrowEffect;
-import objects.particles.RingEffect;
-import haxe.Exception;
-import map.Camera;
 import account.Account;
-import lime.system.System;
-import openfl.utils.Endian;
 import assets.CharacterFactory;
 import classes.model.CharacterSkin;
 import classes.model.CharacterSkinState;
 import constants.ActivationType;
 import constants.ItemConstants;
 import game.events.GuildResultEvent;
+import haxe.Exception;
+import lime.system.System;
+import map.Camera;
 import map.CharacterStatusText;
 import map.SpeechBalloon;
 import objects.GameObject;
 import objects.ObjectLibrary;
 import objects.Player;
 import objects.Projectile;
+import objects.particles.AOEEffect;
+import objects.particles.FlowEffect;
+import objects.particles.HealEffect;
+import objects.particles.LineEffect;
+import objects.particles.NovaEffect;
+import objects.particles.RingEffect;
+import objects.particles.StreamEffect;
+import objects.particles.TeleportEffect;
+import objects.particles.ThrowEffect;
 import openfl.events.Event;
 import openfl.events.IOErrorEvent;
 import openfl.events.ProgressEvent;
 import openfl.events.SecurityErrorEvent;
 import openfl.net.Socket;
 import openfl.utils.ByteArray;
+import openfl.utils.Endian;
 import servers.Server;
 import sound.SoundEffectLibrary;
 import ui.dialogs.Dialog;
@@ -392,740 +392,61 @@ class NetworkHandler {
 
 				switch (packetId) {
 					case AllyShoot:
-						var bulletId = data.readByte();
-						var ownerId = data.readInt();
-						var containerType = data.readUnsignedShort();
-						var angle = data.readFloat();
-
-						var owner = Global.gameSprite.map.getGameObject(ownerId);
-						if (owner == null || owner.dead)
-							return;
-
-						var proj = Global.projPool.get();
-						proj.reset(containerType, 0, ownerId, bulletId, angle, Global.gameSprite.lastFixedUpdate);
-						Global.gameSprite.map.addGameObject(cast proj, owner.mapX, owner.mapY);
-						owner.setAttack(containerType, angle);
+						handleAllyShoot(data);
 					case AccountList:
-						var listId = data.readInt();
-						var ids = new Array<Int>();
-						var num: Int = data.readShort();
-						for (i in 0...num)
-							ids.push(data.readInt());
-
-						#if log_packets
-						trace(Global.gameSprite.lastUpdate, "AccountList: listId=" + listId + ", ids=" + ids);
-						#end
-
-					/*if (listId == 0)
-							Global.gameSprite.map.party.setStars(ids);
-						if (listId == 1)
-							Global.gameSprite.map.party.setIgnores(ids); */
+						handleAccountList(data);
 					case Aoe:
-						var x = data.readFloat();
-						var y = data.readFloat();
-						var radius = data.readFloat();
-						var damage = data.readUnsignedShort();
-						var effect = data.readUnsignedByte();
-						var duration = data.readFloat();
-						var origType = data.readUnsignedShort();
-						var color = data.readUnsignedInt();
-
-						#if log_packets
-						trace(Global.gameSprite.lastUpdate,
-							"Aoe: x="
-							+ x
-							+ ", y="
-							+ y
-							+ ", radius="
-							+ radius
-							+ ", damage="
-							+ damage
-							+ ", effect="
-							+ effect
-							+ ", duration="
-							+ duration
-							+ ", origType="
-							+ origType
-							+ ", color="
-							+ color);
-						#end
-
-						var d = 0;
-						var effects: Array<Int32> = null;
-						if (Global.gameSprite.map.player == null) {
-							aoeAck(Global.gameSprite.lastFixedUpdate, 0, 0);
-							return;
-						}
-
-						Global.gameSprite.map.addGameObject(new AOEEffect(x, y, radius, color), x, y);
-						var hit = Global.gameSprite.map.player.distTo(x, y) <= radius;
-						if (hit) {
-							d = Std.int(GameObject.physicalDamage(damage, Global.gameSprite.map.player.defense,
-								Global.gameSprite.map.player.condition) * Global.gameSprite.map.player.hitMult);
-							effects = null;
-							if (effect != 0) {
-								effects = new Array<Int32>();
-								effects.push(effect);
-							}
-
-							Global.gameSprite.map.player.damage(origType, d, effects, false, null);
-						}
-
-						aoeAck(Global.gameSprite.lastFixedUpdate, Global.gameSprite.map.player.mapX, Global.gameSprite.map.player.mapY);
+						handleAoe(data);
 					case BuyResult:
-						var result: BuyResultType = data.readInt();
-						var resultStr = data.readUTF();
-
-						#if log_packets
-						trace(Global.gameSprite.lastUpdate, "BuyResult: result=" + result + ", resultStr=" + resultStr);
-						#end
-
-						switch (result) {
-							case OpenDialog:
-								Global.layers.dialogs.openDialog(new Dialog("Purchase Error", resultStr, "Close", null));
-							default:
-								Global.gameSprite.textBox.addText(resultStr, result == Success ? 0x0000FF : 0xFF0000);
-						}
+						handleBuyResult(data);
 					case CreateSuccess:
-						playerId = data.readInt();
-						charId = data.readInt();
-
-						#if log_packets
-						trace(Global.gameSprite.lastUpdate, "CreateSuccess: playerId=" + playerId + ", charId=" + charId);
-						#end
-
-						Global.gameSprite.initialize();
-						createCharacter = false;
+						handleCreateSuccess(data);
 					case Damage:
-						var targetId = data.readInt();
-						var effects = new Array<Int32>();
-						var effBitMask = data.readUnsignedInt();
-						for (i in 0...31)
-							if (effBitMask & (1 << i) != 0)
-								effects.push(i);
-
-						var damageAmount = data.readUnsignedShort();
-						var kill = data.readBoolean();
-						var bulletId = data.readUnsignedByte();
-						var objectId = data.readInt();
-
-						#if log_packets
-						trace(Global.gameSprite.lastUpdate,
-							"Damage: targetId="
-							+ targetId
-							+ ", effects="
-							+ effects
-							+ ", damageAmount="
-							+ damageAmount
-							+ ", kill="
-							+ kill
-							+ ", bulletId="
-							+ bulletId
-							+ ", objectId="
-							+ objectId);
-						#end
-
-						var map = Global.gameSprite.map;
-						var proj: Projectile = null;
-						if (objectId >= 0 && bulletId > 0) {
-							var projId = Projectile.findObjId(objectId, bulletId);
-							proj = cast map.getGameObject(projId);
-							if (proj != null && !proj.projProps.multiHit)
-								map.removeGameObject(projId);
-						}
-
-						var go = map.getGameObject(targetId);
-						if (go != null)
-							go.damage(-1, damageAmount, effects, kill, proj);
+						handleDamage(data);
 					case Death:
-						// todo...
-						var accountId = data.readInt();
-						var charId = data.readInt();
-						var killedBy = data.readUTF();
-
-						#if log_packets
-						trace(Global.gameSprite.lastUpdate, "Death: accountId=" + accountId + ", charId=" + charId + ", killedBy=" + killedBy);
-						#end
-
-						disconnect();
+						handleDeath(data);
 					case EnemyShoot:
-						var bulletId = data.readUnsignedByte();
-						var ownerId = data.readInt();
-						var bulletType = data.readUnsignedByte();
-						var startX = data.readFloat();
-						var startY = data.readFloat();
-						var angle = data.readFloat();
-						var damage = data.readShort();
-						var magicDamage = data.readShort();
-						var trueDamage = data.readShort();
-						var numShots = data.readUnsignedByte();
-						var angleInc = data.readFloat();
-
-						#if log_packets
-						trace(Global.gameSprite.lastUpdate,
-							"EnemyShoot: bulletId="
-							+ bulletId
-							+ ", ownerId="
-							+ ownerId
-							+ ", bulletType="
-							+ bulletType
-							+ ", startX="
-							+ startX
-							+ ", startY="
-							+ startY
-							+ ", angle="
-							+ angle
-							+ ", damage="
-							+ damage
-							+ ", numShots="
-							+ numShots
-							+ ", angleInc="
-							+ angleInc);
-						#end
-
-						var owner: GameObject = Global.gameSprite.map.getGameObject(ownerId);
-						if (owner == null || owner.dead) {
-							shootAck(-1);
-							return;
-						}
-
-						for (i in 0...numShots) {
-							var proj = Global.projPool.get();
-							proj.reset(owner.objectType, bulletType, ownerId, (bulletId + i) % 256, angle, Global.gameSprite.lastFixedUpdate);
-							angle += angleInc;
-							proj.setDamages(damage, magicDamage, trueDamage);
-							Global.gameSprite.map.addGameObject(cast proj, startX, startY);
-						}
-
-						shootAck(Global.gameSprite.lastFixedUpdate);
-						owner.setAttack(owner.objectType, angle + angleInc * ((numShots - 1) / 2));
+						handleEnemyShoot(data);
 					case Failure:
-						var errorId: FailureType = data.readInt();
-						var errorDescription = data.readUTF();
-
-						#if log_packets
-						trace(Global.gameSprite.lastUpdate, "Failure: errorId=" + errorId + ", errorDesc=" + errorDescription);
-						#end
-
-						switch (errorId) {
-							case IncorrectVersion:
-								disconnect();
-
-								var dialog: Dialog = new Dialog("Client version: " + Settings.BUILD_VERSION + "\nServer version: " + errorDescription,
-									"Client Update Needed", "Ok", null);
-								dialog.addEventListener(Dialog.BUTTON1_EVENT, function(event: Event) {
-									var dialog: Dialog = cast(event.currentTarget, Dialog);
-									dialog.parent.removeChild(dialog);
-								});
-								Global.layers.dialogs.openDialog(dialog);
-							case ForceCloseGame | MessageDisconnect:
-								disconnect();
-
-								var dialog: Dialog = new Dialog(errorDescription, "Connection error", "Ok", null);
-								dialog.addEventListener(Dialog.BUTTON1_EVENT, function(event: Event) {
-									var dialog: Dialog = cast(event.currentTarget, Dialog);
-									dialog.parent.removeChild(dialog);
-								});
-								Global.layers.dialogs.openDialog(dialog);
-							case InvalidTeleportTarget:
-								Global.gameSprite.textBox.addText(errorDescription, 0xFF0000);
-								player.nextTeleportAt = 0;
-							case MessageNoDisconnect:
-								Global.gameSprite.textBox.addText(errorDescription, 0xFF0000);
-							default:
-								disconnect();
-
-								var dialog: Dialog = new Dialog(errorDescription, "Connection error", "Ok", null);
-								dialog.addEventListener(Dialog.BUTTON1_EVENT, function(event: Event) {
-									var dialog: Dialog = cast(event.currentTarget, Dialog);
-									dialog.parent.removeChild(dialog);
-								});
-								Global.layers.dialogs.openDialog(dialog);
-						}
+						handleFailure(data);
 					case Goto:
-						var objId = data.readInt();
-						var x = data.readFloat();
-						var y = data.readFloat();
-
-						#if log_packets
-						trace(Global.gameSprite.lastUpdate, "Goto: objId=" + objId + ", x=" + x + ", y=" + y);
-						#end
-
-						var player = Global.gameSprite.map.getGameObject(objId);
-						if (player == null)
-							return;
-
-						player.onGoto(x, y, Global.gameSprite.lastFixedUpdate);
-
-						gotoAck(Global.gameSprite.lastFixedUpdate);
+						handleGoto(data);
 					case GuildResult:
-						var success = data.readBoolean();
-						var errorText = data.readUTF();
-
-						#if log_packets
-						trace(Global.gameSprite.lastUpdate, "GuildResult: success=" + success + ", errorText=" + errorText);
-						#end
-
-						Global.gameSprite.textBox.addText(errorText, 0xFF0000);
-						Global.gameSprite.dispatchEvent(new GuildResultEvent(success, errorText));
+						handleGuildResult(data);
 					case InvitedToGuild:
-						var name = data.readUTF();
-						var guildName = data.readUTF();
-
-						#if log_packets
-						trace(Global.gameSprite.lastUpdate, "InvitedToGuild: name=" + name + ", guildName=" + guildName);
-						#end
-
-						// Global.gameSprite.interactPanel.setOverride(new GuildInvitePanel(Global.gameSprite, name, guildName));
-						Global.gameSprite.textBox.addText("You have been invited by " + name + " to join the guild " + guildName
-							+ ".\n  If you wish to join type \"/join " + guildName + "\"",
-							0x0000FF);
+						handleInvitedToGuild(data);
 					case InvResult:
-						var result = data.readInt();
-
-						#if log_packets
-						trace(Global.gameSprite.lastUpdate, "InvResult: result=" + result);
-						#end
-
-						if (result != 0)
-							SoundEffectLibrary.play("error");
+						handleInvResult(data);
 					case MapInfo:
-						var width = data.readInt();
-						var height = data.readInt();
-						var name = data.readUTF();
-						var bgLightColor = data.readInt();
-						var bgLightIntensity = data.readFloat();
-						var allowPlayerTeleport = data.readBoolean();
-						var usesDayNightCycle = data.readBoolean();
-						var dayLightIntensity = -1.0,
-							nightLightIntensity = -1.0,
-							serverTimeOffset = 0;
-						if (usesDayNightCycle) {
-							dayLightIntensity = data.readFloat();
-							nightLightIntensity = data.readFloat();
-							serverTimeOffset = data.readInt() - System.getTimer();
-						}
-
-						Global.gameSprite.map.setProps(width, height, name, allowPlayerTeleport, bgLightColor, bgLightIntensity, dayLightIntensity,
-							nightLightIntensity, serverTimeOffset);
-
-						#if log_packets
-						trace(Global.gameSprite.lastUpdate,
-							"MapInfo: width="
-							+ width
-							+ ", height="
-							+ height
-							+ ", name="
-							+ name
-							+ ", bgLightColor="
-							+ bgLightColor
-							+ ", bgLightIntensity="
-							+ bgLightIntensity
-							+ ", allowPlayerTeleport="
-							+ allowPlayerTeleport
-							+ ", usesDayNightCycle="
-							+ usesDayNightCycle
-							+ ", dayLightIntensity="
-							+ dayLightIntensity
-							+ ", nightLightIntensity="
-							+ nightLightIntensity
-							+ ", serverTimeOffset="
-							+ serverTimeOffset);
-						#end
+						handleMapInfo(data);
 					case NewTick:
-						if (Global.gameSprite == null)
-							return;
-
-						var tickId = data.readUnsignedByte();
-						var tickTime = Std.int(1000 / data.readUnsignedByte());
-						var len = data.readShort();
-						for (i in 0...len) {
-							var objId = data.readInt();
-							var x = data.readFloat();
-							var y = data.readFloat();
-
-							var map = Global.gameSprite.map;
-							var go = map.getGameObject(objId);
-							if (go != null) {
-								if (tickTime != 0 && objId != playerId)
-									go.onTickPos(x, y, tickTime, tickId);
-								for (j in 0...data.readShort())
-									parseStat(go, data.readUnsignedByte(), data);
-
-								#if log_packets
-								trace(Global.gameSprite.lastUpdate, "NewTick");
-								#end
-								move(tickId, player);
-								lastTickId = tickId;
-								continue;
-							}
-
-							trace('Could not find NewTick GameObject: objId=$objId, x=$x, y=$y');
-							for (j in 0...data.readShort())
-								parseStat(null, data.readUnsignedByte(), data);
-						}
-
-						#if log_packets
-						trace(Global.gameSprite.lastUpdate, "NewTick");
-						#end
-
-						move(tickId, player);
-
-						lastTickId = tickId;
+						handleNewTick(data);
 					case Notification:
-						var objectId = data.readInt();
-						var text = data.readUTF();
-						var color = data.readUnsignedInt();
-						#if log_packets
-						trace(Global.gameSprite.lastUpdate, "Notification: objId=" + objectId + ", text=" + text + ", color=" + color);
-						#end
-
-						var go = Global.gameSprite.map.getGameObject(objectId);
-						if (go != null)
-							Global.gameSprite.map.addStatusText(new CharacterStatusText(go, text, color, 2000));
-						else {
-							var p = Global.gameSprite.map.getGameObject(objectId);
-							if (p != null) {
-								Global.gameSprite.map.addStatusText(new CharacterStatusText(p, text, color, 2000));
-								if (p == player && text == "Quest Complete!")
-									Global.gameSprite.map.quest.completed();
-							}
-						}
+						handleNotification(data);
 					case Ping:
-						var serial = data.readInt();
-
-						#if log_packets
-						trace(Global.gameSprite.lastUpdate, "Ping: serial=" + serial);
-						#end
-
-						pong(serial, System.getTimer());
+						handlePing(data);
 					case PlaySound:
-						var ownerId = data.readInt();
-						var soundId = data.readUnsignedByte();
-						#if log_packets
-						trace(Global.gameSprite.lastUpdate, "PlaySound: ownerId=" + ownerId + ", soundId=" + soundId);
-						#end
-
-						var obj = Global.gameSprite.map.getGameObject(ownerId);
-						if (obj != null)
-							obj.playSound(soundId);
+						handlePlaySound(data);
 					case QuestObjId:
-						var objId = data.readInt();
-
-						#if log_packets
-						trace(Global.gameSprite.lastUpdate, "QuestObjId: objId=" + objId);
-						#end
-
-						Global.gameSprite.map.quest.setObject(objId);
+						handleQuestObjId(data);
 					case ServerPlayerShoot:
-						var bulletId = data.readUnsignedByte();
-						var ownerId = data.readInt();
-						var containerType = data.readShort();
-						var startX = data.readFloat();
-						var startY = data.readFloat();
-						var angle = data.readFloat();
-						var damage = data.readShort();
-
-						#if log_packets
-						trace(Global.gameSprite.lastUpdate,
-							"ServerPlayerShoot: bulletId="
-							+ bulletId
-							+ ", ownerId="
-							+ ownerId
-							+ ", containerType="
-							+ containerType
-							+ ", startX="
-							+ startX
-							+ ", startY="
-							+ startY
-							+ ", angle="
-							+ angle
-							+ ", damage="
-							+ damage);
-						#end
-
-						var needsAck: Bool = ownerId == playerId;
-						var owner = Global.gameSprite.map.getGameObject(ownerId);
-						if (owner == null || owner.dead) {
-							if (needsAck)
-								shootAck(-1);
-							return;
-						}
-
-						var proj = Global.projPool.get();
-						proj.reset(containerType, 0, ownerId, bulletId, angle, Global.gameSprite.lastFixedUpdate);
-						proj.setDamages(damage, 0, 0);
-						Global.gameSprite.map.addGameObject(cast proj, startX, startY);
-						if (needsAck)
-							shootAck(Global.gameSprite.lastFixedUpdate);
+						handleServerPlayerShoot(data);
 					case ShowEffect:
-						var effectType: ShowEffectType = data.readUnsignedByte();
-						var targetObjectId = data.readInt();
-						var x1 = data.readFloat();
-						var y1 = data.readFloat();
-						var x2 = data.readFloat();
-						var y2 = data.readFloat();
-						var color = data.readUnsignedInt();
-
-						#if log_packets
-						trace(Global.gameSprite.lastUpdate,
-							"ShowEffect: effectType="
-							+ effectType
-							+ ", targetObjectId="
-							+ targetObjectId
-							+ ", x1="
-							+ x1
-							+ ", y1="
-							+ y1
-							+ ", x2="
-							+ x2
-							+ ", y2="
-							+ y2
-							+ ", color="
-							+ color);
-						#end
-
-						var map = Global.gameSprite.map;
-						switch (effectType) {
-							case Heal:
-								var go = map.getGameObject(targetObjectId);
-								if (go == null)
-									return;
-
-								map.addGameObject(new HealEffect(go, color), go.mapX, go.mapY);
-							case Teleport:
-								map.addGameObject(new TeleportEffect(), x1, y1);
-							case Stream:
-								map.addGameObject(new StreamEffect(x1, y1, x2, y2, color), x1, y2);
-							case Throw:
-								var go = map.getGameObject(targetObjectId);
-								if (go == null)
-									return;
-
-								var startX = go != null ? go.mapX : x2;
-								var startY = go != null ? go.mapY : y2;
-								map.addGameObject(new ThrowEffect(startX, startY, x1, y1, color), startX, startY);
-							case Nova:
-								var go = map.getGameObject(targetObjectId);
-								if (go == null)
-									return;
-
-								map.addGameObject(new NovaEffect(go.mapX, go.mapY, x1, color), go.mapX, go.mapY);
-							case Flow:
-								var go = map.getGameObject(targetObjectId);
-								if (go == null)
-									return;
-
-								map.addGameObject(new FlowEffect(x1, y1, go, color), x1, y1);
-							case Line:
-								var go = map.getGameObject(targetObjectId);
-								if (go == null)
-									return;
-
-								map.addGameObject(new LineEffect(go.mapX, go.mapY, x1, y1, color), x1, y1);
-							case Ring:
-								var go = map.getGameObject(targetObjectId);
-								if (go == null)
-									return;
-
-								map.addGameObject(new RingEffect(go, x1, color, 0), go.mapX, go.mapY);
-							case Jitter:
-								Camera.startJitter();
-							case Flash:
-								var go = map.getGameObject(targetObjectId);
-								if (go == null)
-									return;
-
-								go.flashStartTime = System.getTimer();
-								go.flashColor = color;
-								go.flashPeriodMs = Std.int(x1 * 1000);
-								go.flashRepeats = Std.int(y1);
-							default:
-								trace("ERROR: Unknown effect type: " + effectType);
-						}
+						handleShowEffect(data);
 					case Text:
-						var name = data.readUTF();
-						var objectId = data.readInt();
-						var bubbleTime = data.readUnsignedByte();
-						var recipient = data.readUTF();
-						var text = data.readUTF();
-						var textColor = 0xFFFFFF;
-						var nameColor = 0xFF00FF;
-						if (text != "")
-							textColor = data.readUnsignedInt();
-						if (name != "")
-							nameColor = data.readUnsignedInt();
-
-						#if log_packets
-						trace(Global.gameSprite.lastUpdate,
-							"Text: name="
-							+ name
-							+ ", objectId="
-							+ objectId
-							+ ", bubbleTime="
-							+ bubbleTime
-							+ ", recipient="
-							+ recipient
-							+ ", text="
-							+ text
-							+ ", textColor="
-							+ textColor
-							+ ", nameColor="
-							+ nameColor);
-						#end
-
-						if (objectId != -1) {
-							var go = Global.gameSprite.map.getGameObject(objectId);
-							if (go != null) {
-								if (go.props.isEnemy) {
-									Global.gameSprite.map.addSpeechBalloon(new SpeechBalloon(go, text, SpeechBalloon.ENEMY_BUBBLE, bubbleTime));
-									return;
-								}
-
-								var sbType = SpeechBalloon.DEFAULT_BUBBLE;
-								if (recipient != "")
-									sbType = SpeechBalloon.MESSAGE_BUBBLE;
-
-								switch (nameColor) {
-									case 0xF2CA46:
-										sbType = SpeechBalloon.ADMIN_BUBBLE;
-									// todo
-									case 0x000000:
-										sbType = SpeechBalloon.GUILD_BUBBLE;
-									case 0x000001:
-										sbType = SpeechBalloon.PARTY_BUBBLE;
-								}
-
-								Global.gameSprite.map.addSpeechBalloon(new SpeechBalloon(go, text, sbType, bubbleTime));
-							}
-						}
-
-						Global.gameSprite.textBox.addTextFull(name, recipient, text, nameColor, textColor);
+						handleText(data);
 					case TradeAccepted:
-						var myOffer = new Array<Bool>();
-						var num = data.readShort();
-						for (i in 0...num)
-							myOffer.push(data.readBoolean());
-
-						var yourOffer = new Array<Bool>();
-						num = data.readShort();
-						for (i in 0...num)
-							yourOffer.push(data.readBoolean());
-
-						#if log_packets
-						trace(Global.gameSprite.lastUpdate, "TradeAccepted: myOffer=" + myOffer + ", yourOffer=" + yourOffer);
-						#end
-
-					// todo trade
-					// Global.gameSprite.hudView.tradeAccepted(tradeAccepted);
+						handleTradeAccepted(data);
 					case TradeChanged:
-						var offer = new Array<Bool>();
-						var num = data.readShort();
-						for (i in 0...num)
-							offer.push(data.readBoolean());
-
-						#if log_packets
-						trace(Global.gameSprite.lastUpdate, "TradeChanged: offer=" + offer);
-						#end
-
-					// todo trade
-					// Global.gameSprite.hudView.tradeChanged(tradeChanged);
+						handleTradeChanged(data);
 					case TradeDone:
-						var code = data.readInt();
-						var description = data.readUTF();
-
-						#if log_packets
-						trace(Global.gameSprite.lastUpdate, "TradeDone: code=" + code + ", description=" + description);
-						#end
-
-						// todo trade
-						// Global.gameSprite.hudView.tradeDone();
-						Global.gameSprite.textBox.addText(description, 0x0000FF);
+						handleTradeDone(data);
 					case TradeRequested:
-						var name = data.readUTF();
-
-						#if log_packets
-						trace(Global.gameSprite.lastUpdate, "TradeRequested: name=" + name);
-						#end
-
-						// Global.gameSprite.interactPanel.setOverride(new TradeRequestPanel(Global.gameSprite, name));
-						Global.gameSprite.textBox.addText(name + " wants to " + "trade with you.  Type \"/trade " + name + "\" to trade.", 0x0000FF);
+						handleTradeRequested(data);
 					case TradeStart:
-						var myItems = new Array<TradeItem>();
-						for (i in 0...data.readShort())
-							myItems.push({
-								item: data.readInt(),
-								slotType: data.readInt(),
-								tradeable: data.readBoolean(),
-								included: data.readBoolean()
-							});
-
-						var yourName = data.readUTF();
-						var yourItems = new Array<TradeItem>();
-						for (i in 0...data.readShort())
-							yourItems.push({
-								item: data.readInt(),
-								slotType: data.readInt(),
-								tradeable: data.readBoolean(),
-								included: data.readBoolean()
-							});
-
-						#if log_packets
-						trace(Global.gameSprite.lastUpdate, "TradeStart: myItems=" + myItems + ", yourName=" + yourName + ", yourItems=" + yourItems);
-						#end
-
-					// todo trade
-					// Global.gameSprite.hudView.startTrade(Global.gameSprite_, tradeStart);
+						handleTradeStart(data);
 					case Update:
-						for (i in 0...data.readShort()) {
-							var x = data.readShort();
-							var y = data.readShort();
-							var tileType = data.readUnsignedShort();
-							Global.gameSprite.map.setGroundTile(x, y, tileType);
-							Global.gameSprite.miniMap.setGroundTile(x, y, tileType);
-						}
-
-						for (i in 0...data.readShort())
-							Global.gameSprite.map.removeObj(data.readInt());
-
-						for (i in 0...data.readShort()) {
-							var objType = data.readUnsignedShort();
-							var objId = data.readInt();
-							var x = data.readFloat();
-							var y = data.readFloat();
-
-							var map = Global.gameSprite.map;
-							var go = ObjectLibrary.getObjectFromType(objType);
-							go?.setObjectId(objId);
-
-							for (j in 0...data.readShort())
-								parseStat(go, data.readUnsignedByte(), data);
-
-							if (go == null) {
-								trace('Could not find Update GameObject: objId=$objId, x=$x, y=$y');
-								continue;
-							}
-
-							map.addGameObject(go, x, y);
-							if (go.props.isPlayer) {
-								var newPlayer = cast(go, Player);
-								setPlayerSkinTemplate(newPlayer, 0);
-								if (newPlayer.objectId == playerId) {
-									player = newPlayer;
-									map.player = newPlayer;
-									Global.gameSprite.setFocus(newPlayer);
-								}
-							}
-
-							if (go.props.staticObj && go.props.occupySquare && !go.props.noMiniMap)
-								Global.gameSprite.miniMap.setGameObjectTile(Std.int(go.mapX), Std.int(go.mapY), go);
-						}
-
-						updateAck();
-
-						#if log_packets
-						trace(Global.gameSprite.lastUpdate, "Update");
-						#end
+						handleUpdate(data);
 				}
 			}
 		} catch (e: Exception) {
@@ -1133,6 +454,796 @@ class NetworkHandler {
 			trace('Socket Read Error: $e, stack trace: ${e.stack}');
 			disconnect();
 		}
+	}
+
+	private static function handleAllyShoot(data: ByteArray) {
+		var bulletId = data.readByte();
+		var ownerId = data.readInt();
+		var containerType = data.readUnsignedShort();
+		var angle = data.readFloat();
+
+		var owner = Global.gameSprite.map.getGameObject(ownerId);
+		if (owner == null || owner.dead)
+			return;
+
+		var proj = Global.projPool.get();
+		proj.reset(containerType, 0, ownerId, bulletId, angle, Global.gameSprite.lastFixedUpdate);
+		Global.gameSprite.map.addGameObject(cast proj, owner.mapX, owner.mapY);
+		owner.setAttack(containerType, angle);
+	}
+
+	private static function handleAccountList(data: ByteArray) {
+		var listId = data.readInt();
+		var ids = new Array<Int>();
+		var num: Int = data.readShort();
+		for (i in 0...num)
+			ids.push(data.readInt());
+
+		#if log_packets
+		trace(Global.gameSprite.lastUpdate, "AccountList: listId=" + listId + ", ids=" + ids);
+		#end
+
+		/*if (listId == 0)
+				Global.gameSprite.map.party.setStars(ids);
+			if (listId == 1)
+				Global.gameSprite.map.party.setIgnores(ids); */
+	}
+
+	private static function handleAoe(data: ByteArray) {
+		var x = data.readFloat();
+		var y = data.readFloat();
+		var radius = data.readFloat();
+		var damage = data.readUnsignedShort();
+		var effect = data.readUnsignedByte();
+		var duration = data.readFloat();
+		var origType = data.readUnsignedShort();
+		var color = data.readUnsignedInt();
+
+		#if log_packets
+		trace(Global.gameSprite.lastUpdate,
+			"Aoe: x="
+			+ x
+			+ ", y="
+			+ y
+			+ ", radius="
+			+ radius
+			+ ", damage="
+			+ damage
+			+ ", effect="
+			+ effect
+			+ ", duration="
+			+ duration
+			+ ", origType="
+			+ origType
+			+ ", color="
+			+ color);
+		#end
+
+		var d = 0;
+		var effects: Array<Int32> = null;
+		if (Global.gameSprite.map.player == null) {
+			aoeAck(Global.gameSprite.lastFixedUpdate, 0, 0);
+			return;
+		}
+
+		Global.gameSprite.map.addGameObject(new AOEEffect(x, y, radius, color), x, y);
+		var hit = Global.gameSprite.map.player.distTo(x, y) <= radius;
+		if (hit) {
+			d = Std.int(GameObject.physicalDamage(damage, Global.gameSprite.map.player.defense,
+				Global.gameSprite.map.player.condition) * Global.gameSprite.map.player.hitMult);
+			effects = null;
+			if (effect != 0) {
+				effects = new Array<Int32>();
+				effects.push(effect);
+			}
+
+			Global.gameSprite.map.player.damage(origType, d, effects, false, null);
+		}
+
+		aoeAck(Global.gameSprite.lastFixedUpdate, Global.gameSprite.map.player.mapX, Global.gameSprite.map.player.mapY);
+	}
+
+	private static function handleBuyResult(data: ByteArray) {
+		var result: BuyResultType = data.readInt();
+		var resultStr = data.readUTF();
+
+		#if log_packets
+		trace(Global.gameSprite.lastUpdate, "BuyResult: result=" + result + ", resultStr=" + resultStr);
+		#end
+
+		switch (result) {
+			case OpenDialog:
+				Global.layers.dialogs.openDialog(new Dialog("Purchase Error", resultStr, "Close", null));
+			default:
+				Global.gameSprite.textBox.addText(resultStr, result == Success ? 0x0000FF : 0xFF0000);
+		}
+	}
+
+	private static function handleCreateSuccess(data: ByteArray) {
+		playerId = data.readInt();
+		charId = data.readInt();
+
+		#if log_packets
+		trace(Global.gameSprite.lastUpdate, "CreateSuccess: playerId=" + playerId + ", charId=" + charId);
+		#end
+
+		Global.gameSprite.initialize();
+		createCharacter = false;
+	}
+
+	private static function handleDamage(data: ByteArray) {
+		var targetId = data.readInt();
+		var effects = new Array<Int32>();
+		var effBitMask = data.readUnsignedInt();
+		for (i in 0...31)
+			if (effBitMask & (1 << i) != 0)
+				effects.push(i);
+
+		var damageAmount = data.readUnsignedShort();
+		var kill = data.readBoolean();
+		var bulletId = data.readUnsignedByte();
+		var objectId = data.readInt();
+
+		#if log_packets
+		trace(Global.gameSprite.lastUpdate,
+			"Damage: targetId="
+			+ targetId
+			+ ", effects="
+			+ effects
+			+ ", damageAmount="
+			+ damageAmount
+			+ ", kill="
+			+ kill
+			+ ", bulletId="
+			+ bulletId
+			+ ", objectId="
+			+ objectId);
+		#end
+
+		var map = Global.gameSprite.map;
+		var proj: Projectile = null;
+		if (objectId >= 0 && bulletId > 0) {
+			var projId = Projectile.findObjId(objectId, bulletId);
+			proj = cast map.getGameObject(projId);
+			if (proj != null && !proj.projProps.multiHit)
+				map.removeGameObject(projId);
+		}
+
+		var go = map.getGameObject(targetId);
+		if (go != null)
+			go.damage(-1, damageAmount, effects, kill, proj);
+	}
+
+	private static function handleDeath(data: ByteArray) {
+		// todo...
+		var accountId = data.readInt();
+		var charId = data.readInt();
+		var killedBy = data.readUTF();
+
+		#if log_packets
+		trace(Global.gameSprite.lastUpdate, "Death: accountId=" + accountId + ", charId=" + charId + ", killedBy=" + killedBy);
+		#end
+
+		disconnect();
+	}
+
+	private static function handleEnemyShoot(data: ByteArray) {
+		var bulletId = data.readUnsignedByte();
+		var ownerId = data.readInt();
+		var bulletType = data.readUnsignedByte();
+		var startX = data.readFloat();
+		var startY = data.readFloat();
+		var angle = data.readFloat();
+		var damage = data.readShort();
+		var magicDamage = data.readShort();
+		var trueDamage = data.readShort();
+		var numShots = data.readUnsignedByte();
+		var angleInc = data.readFloat();
+
+		#if log_packets
+		trace(Global.gameSprite.lastUpdate,
+			"EnemyShoot: bulletId="
+			+ bulletId
+			+ ", ownerId="
+			+ ownerId
+			+ ", bulletType="
+			+ bulletType
+			+ ", startX="
+			+ startX
+			+ ", startY="
+			+ startY
+			+ ", angle="
+			+ angle
+			+ ", damage="
+			+ damage
+			+ ", numShots="
+			+ numShots
+			+ ", angleInc="
+			+ angleInc);
+		#end
+
+		var owner: GameObject = Global.gameSprite.map.getGameObject(ownerId);
+		if (owner == null || owner.dead) {
+			shootAck(-1);
+			return;
+		}
+
+		for (i in 0...numShots) {
+			var proj = Global.projPool.get();
+			proj.reset(owner.objectType, bulletType, ownerId, (bulletId + i) % 256, angle, Global.gameSprite.lastFixedUpdate);
+			angle += angleInc;
+			proj.setDamages(damage, magicDamage, trueDamage);
+			Global.gameSprite.map.addGameObject(cast proj, startX, startY);
+		}
+
+		shootAck(Global.gameSprite.lastFixedUpdate);
+		owner.setAttack(owner.objectType, angle + angleInc * ((numShots - 1) / 2));
+	}
+
+	private static function handleFailure(data: ByteArray) {
+		var errorId: FailureType = data.readInt();
+		var errorDescription = data.readUTF();
+
+		#if log_packets
+		trace(Global.gameSprite.lastUpdate, "Failure: errorId=" + errorId + ", errorDesc=" + errorDescription);
+		#end
+
+		switch (errorId) {
+			case IncorrectVersion:
+				disconnect();
+
+				var dialog: Dialog = new Dialog("Client version: " + Settings.BUILD_VERSION + "\nServer version: " + errorDescription, "Client Update Needed",
+					"Ok", null);
+				dialog.addEventListener(Dialog.BUTTON1_EVENT, function(event: Event) {
+					var dialog: Dialog = cast(event.currentTarget, Dialog);
+					dialog.parent.removeChild(dialog);
+				});
+				Global.layers.dialogs.openDialog(dialog);
+			case ForceCloseGame | MessageDisconnect:
+				disconnect();
+
+				var dialog: Dialog = new Dialog(errorDescription, "Connection error", "Ok", null);
+				dialog.addEventListener(Dialog.BUTTON1_EVENT, function(event: Event) {
+					var dialog: Dialog = cast(event.currentTarget, Dialog);
+					dialog.parent.removeChild(dialog);
+				});
+				Global.layers.dialogs.openDialog(dialog);
+			case InvalidTeleportTarget:
+				Global.gameSprite.textBox.addText(errorDescription, 0xFF0000);
+				player.nextTeleportAt = 0;
+			case MessageNoDisconnect:
+				Global.gameSprite.textBox.addText(errorDescription, 0xFF0000);
+			default:
+				disconnect();
+
+				var dialog: Dialog = new Dialog(errorDescription, "Connection error", "Ok", null);
+				dialog.addEventListener(Dialog.BUTTON1_EVENT, function(event: Event) {
+					var dialog: Dialog = cast(event.currentTarget, Dialog);
+					dialog.parent.removeChild(dialog);
+				});
+				Global.layers.dialogs.openDialog(dialog);
+		}
+	}
+
+	private static function handleGoto(data: ByteArray) {
+		var objId = data.readInt();
+		var x = data.readFloat();
+		var y = data.readFloat();
+
+		#if log_packets
+		trace(Global.gameSprite.lastUpdate, "Goto: objId=" + objId + ", x=" + x + ", y=" + y);
+		#end
+
+		var player = Global.gameSprite.map.getGameObject(objId);
+		if (player == null)
+			return;
+
+		player.onGoto(x, y, Global.gameSprite.lastFixedUpdate);
+
+		gotoAck(Global.gameSprite.lastFixedUpdate);
+	}
+
+	private static function handleGuildResult(data: ByteArray) {
+		var success = data.readBoolean();
+		var errorText = data.readUTF();
+
+		#if log_packets
+		trace(Global.gameSprite.lastUpdate, "GuildResult: success=" + success + ", errorText=" + errorText);
+		#end
+
+		Global.gameSprite.textBox.addText(errorText, 0xFF0000);
+		Global.gameSprite.dispatchEvent(new GuildResultEvent(success, errorText));
+	}
+
+	private static function handleInvitedToGuild(data: ByteArray) {
+		var name = data.readUTF();
+		var guildName = data.readUTF();
+
+		#if log_packets
+		trace(Global.gameSprite.lastUpdate, "InvitedToGuild: name=" + name + ", guildName=" + guildName);
+		#end
+
+		// Global.gameSprite.interactPanel.setOverride(new GuildInvitePanel(Global.gameSprite, name, guildName));
+		Global.gameSprite.textBox.addText("You have been invited by " + name + " to join the guild " + guildName + ".\n  If you wish to join type \"/join "
+			+ guildName + "\"", 0x0000FF);
+	}
+
+	private static function handleInvResult(data: ByteArray) {
+		var result = data.readInt();
+
+		#if log_packets
+		trace(Global.gameSprite.lastUpdate, "InvResult: result=" + result);
+		#end
+
+		if (result != 0)
+			SoundEffectLibrary.play("error");
+	}
+
+	private static function handleMapInfo(data: ByteArray) {
+		var width = data.readInt();
+		var height = data.readInt();
+		var name = data.readUTF();
+		var bgLightColor = data.readInt();
+		var bgLightIntensity = data.readFloat();
+		var allowPlayerTeleport = data.readBoolean();
+		var usesDayNightCycle = data.readBoolean();
+		var dayLightIntensity = -1.0,
+			nightLightIntensity = -1.0,
+			serverTimeOffset = 0;
+		if (usesDayNightCycle) {
+			dayLightIntensity = data.readFloat();
+			nightLightIntensity = data.readFloat();
+			serverTimeOffset = data.readInt() - System.getTimer();
+		}
+
+		Global.gameSprite.map.setProps(width, height, name, allowPlayerTeleport, bgLightColor, bgLightIntensity, dayLightIntensity, nightLightIntensity,
+			serverTimeOffset);
+
+		#if log_packets
+		trace(Global.gameSprite.lastUpdate,
+			"MapInfo: width="
+			+ width
+			+ ", height="
+			+ height
+			+ ", name="
+			+ name
+			+ ", bgLightColor="
+			+ bgLightColor
+			+ ", bgLightIntensity="
+			+ bgLightIntensity
+			+ ", allowPlayerTeleport="
+			+ allowPlayerTeleport
+			+ ", usesDayNightCycle="
+			+ usesDayNightCycle
+			+ ", dayLightIntensity="
+			+ dayLightIntensity
+			+ ", nightLightIntensity="
+			+ nightLightIntensity
+			+ ", serverTimeOffset="
+			+ serverTimeOffset);
+		#end
+	}
+
+	private static function handleNewTick(data: ByteArray) {
+		if (Global.gameSprite == null)
+			return;
+
+		var tickId = data.readUnsignedByte();
+		var tickTime = Std.int(1000 / data.readUnsignedByte());
+		var len = data.readShort();
+		for (i in 0...len) {
+			var objId = data.readInt();
+			var x = data.readFloat();
+			var y = data.readFloat();
+
+			var map = Global.gameSprite.map;
+			var go = map.getGameObject(objId);
+			if (go != null) {
+				if (tickTime != 0 && objId != playerId)
+					go.onTickPos(x, y, tickTime, tickId);
+				for (j in 0...data.readShort())
+					parseStat(go, data.readUnsignedByte(), data);
+
+				#if log_packets
+				trace(Global.gameSprite.lastUpdate, "NewTick");
+				#end
+				move(tickId, player);
+				lastTickId = tickId;
+				continue;
+			}
+
+			trace('Could not find NewTick GameObject: objId=$objId, x=$x, y=$y');
+			for (j in 0...data.readShort())
+				parseStat(null, data.readUnsignedByte(), data);
+		}
+
+		#if log_packets
+		trace(Global.gameSprite.lastUpdate, "NewTick");
+		#end
+
+		move(tickId, player);
+
+		lastTickId = tickId;
+	}
+
+	private static function handleNotification(data: ByteArray) {
+		var objectId = data.readInt();
+		var text = data.readUTF();
+		var color = data.readUnsignedInt();
+		#if log_packets
+		trace(Global.gameSprite.lastUpdate, "Notification: objId=" + objectId + ", text=" + text + ", color=" + color);
+		#end
+
+		var go = Global.gameSprite.map.getGameObject(objectId);
+		if (go != null)
+			Global.gameSprite.map.addStatusText(new CharacterStatusText(go, text, color, 2000));
+		else {
+			var p = Global.gameSprite.map.getGameObject(objectId);
+			if (p != null) {
+				Global.gameSprite.map.addStatusText(new CharacterStatusText(p, text, color, 2000));
+				if (p == player && text == "Quest Complete!")
+					Global.gameSprite.map.quest.completed();
+			}
+		}
+	}
+
+	private static function handlePing(data: ByteArray) {
+		var serial = data.readInt();
+
+		#if log_packets
+		trace(Global.gameSprite.lastUpdate, "Ping: serial=" + serial);
+		#end
+
+		pong(serial, System.getTimer());
+	}
+
+	private static function handlePlaySound(data: ByteArray) {
+		var ownerId = data.readInt();
+		var soundId = data.readUnsignedByte();
+		#if log_packets
+		trace(Global.gameSprite.lastUpdate, "PlaySound: ownerId=" + ownerId + ", soundId=" + soundId);
+		#end
+
+		var obj = Global.gameSprite.map.getGameObject(ownerId);
+		if (obj != null)
+			obj.playSound(soundId);
+	}
+
+	private static function handleQuestObjId(data: ByteArray) {
+		var objId = data.readInt();
+
+		#if log_packets
+		trace(Global.gameSprite.lastUpdate, "QuestObjId: objId=" + objId);
+		#end
+
+		Global.gameSprite.map.quest.setObject(objId);
+	}
+
+	private static function handleServerPlayerShoot(data: ByteArray) {
+		var bulletId = data.readUnsignedByte();
+		var ownerId = data.readInt();
+		var containerType = data.readShort();
+		var startX = data.readFloat();
+		var startY = data.readFloat();
+		var angle = data.readFloat();
+		var damage = data.readShort();
+
+		#if log_packets
+		trace(Global.gameSprite.lastUpdate,
+			"ServerPlayerShoot: bulletId="
+			+ bulletId
+			+ ", ownerId="
+			+ ownerId
+			+ ", containerType="
+			+ containerType
+			+ ", startX="
+			+ startX
+			+ ", startY="
+			+ startY
+			+ ", angle="
+			+ angle
+			+ ", damage="
+			+ damage);
+		#end
+
+		var needsAck: Bool = ownerId == playerId;
+		var owner = Global.gameSprite.map.getGameObject(ownerId);
+		if (owner == null || owner.dead) {
+			if (needsAck)
+				shootAck(-1);
+			return;
+		}
+
+		var proj = Global.projPool.get();
+		proj.reset(containerType, 0, ownerId, bulletId, angle, Global.gameSprite.lastFixedUpdate);
+		proj.setDamages(damage, 0, 0);
+		Global.gameSprite.map.addGameObject(cast proj, startX, startY);
+		if (needsAck)
+			shootAck(Global.gameSprite.lastFixedUpdate);
+	}
+
+	private static function handleShowEffect(data: ByteArray) {
+		var effectType: ShowEffectType = data.readUnsignedByte();
+		var targetObjectId = data.readInt();
+		var x1 = data.readFloat();
+		var y1 = data.readFloat();
+		var x2 = data.readFloat();
+		var y2 = data.readFloat();
+		var color = data.readUnsignedInt();
+
+		#if log_packets
+		trace(Global.gameSprite.lastUpdate,
+			"ShowEffect: effectType="
+			+ effectType
+			+ ", targetObjectId="
+			+ targetObjectId
+			+ ", x1="
+			+ x1
+			+ ", y1="
+			+ y1
+			+ ", x2="
+			+ x2
+			+ ", y2="
+			+ y2
+			+ ", color="
+			+ color);
+		#end
+
+		var map = Global.gameSprite.map;
+		switch (effectType) {
+			case Heal:
+				var go = map.getGameObject(targetObjectId);
+				if (go == null)
+					return;
+
+				map.addGameObject(new HealEffect(go, color), go.mapX, go.mapY);
+			case Teleport:
+				map.addGameObject(new TeleportEffect(), x1, y1);
+			case Stream:
+				map.addGameObject(new StreamEffect(x1, y1, x2, y2, color), x1, y2);
+			case Throw:
+				var go = map.getGameObject(targetObjectId);
+				if (go == null)
+					return;
+
+				var startX = go != null ? go.mapX : x2;
+				var startY = go != null ? go.mapY : y2;
+				map.addGameObject(new ThrowEffect(startX, startY, x1, y1, color), startX, startY);
+			case Nova:
+				var go = map.getGameObject(targetObjectId);
+				if (go == null)
+					return;
+
+				map.addGameObject(new NovaEffect(go.mapX, go.mapY, x1, color), go.mapX, go.mapY);
+			case Flow:
+				var go = map.getGameObject(targetObjectId);
+				if (go == null)
+					return;
+
+				map.addGameObject(new FlowEffect(x1, y1, go, color), x1, y1);
+			case Line:
+				var go = map.getGameObject(targetObjectId);
+				if (go == null)
+					return;
+
+				map.addGameObject(new LineEffect(go.mapX, go.mapY, x1, y1, color), x1, y1);
+			case Ring:
+				var go = map.getGameObject(targetObjectId);
+				if (go == null)
+					return;
+
+				map.addGameObject(new RingEffect(go, x1, color, 0), go.mapX, go.mapY);
+			case Jitter:
+				Camera.startJitter();
+			case Flash:
+				var go = map.getGameObject(targetObjectId);
+				if (go == null)
+					return;
+
+				go.flashStartTime = System.getTimer();
+				go.flashColor = color;
+				go.flashPeriodMs = Std.int(x1 * 1000);
+				go.flashRepeats = Std.int(y1);
+			default:
+				trace("ERROR: Unknown effect type: " + effectType);
+		}
+	}
+
+	private static function handleText(data: ByteArray) {
+		var name = data.readUTF();
+		var objectId = data.readInt();
+		var bubbleTime = data.readUnsignedByte();
+		var recipient = data.readUTF();
+		var text = data.readUTF();
+		var textColor = 0xFFFFFF;
+		var nameColor = 0xFF00FF;
+		if (text != "")
+			textColor = data.readUnsignedInt();
+		if (name != "")
+			nameColor = data.readUnsignedInt();
+
+		#if log_packets
+		trace(Global.gameSprite.lastUpdate,
+			"Text: name="
+			+ name
+			+ ", objectId="
+			+ objectId
+			+ ", bubbleTime="
+			+ bubbleTime
+			+ ", recipient="
+			+ recipient
+			+ ", text="
+			+ text
+			+ ", textColor="
+			+ textColor
+			+ ", nameColor="
+			+ nameColor);
+		#end
+
+		if (objectId != -1) {
+			var go = Global.gameSprite.map.getGameObject(objectId);
+			if (go != null) {
+				if (go.props.isEnemy) {
+					Global.gameSprite.map.addSpeechBalloon(new SpeechBalloon(go, text, SpeechBalloon.ENEMY_BUBBLE, bubbleTime));
+					return;
+				}
+
+				var sbType = SpeechBalloon.DEFAULT_BUBBLE;
+				if (recipient != "")
+					sbType = SpeechBalloon.MESSAGE_BUBBLE;
+
+				switch (nameColor) {
+					case 0xF2CA46:
+						sbType = SpeechBalloon.ADMIN_BUBBLE;
+					// todo
+					case 0x000000:
+						sbType = SpeechBalloon.GUILD_BUBBLE;
+					case 0x000001:
+						sbType = SpeechBalloon.PARTY_BUBBLE;
+				}
+
+				Global.gameSprite.map.addSpeechBalloon(new SpeechBalloon(go, text, sbType, bubbleTime));
+			}
+		}
+
+		Global.gameSprite.textBox.addTextFull(name, recipient, text, nameColor, textColor);
+	}
+
+	private static function handleTradeAccepted(data: ByteArray) {
+		var myOffer = new Array<Bool>();
+		var num = data.readShort();
+		for (i in 0...num)
+			myOffer.push(data.readBoolean());
+
+		var yourOffer = new Array<Bool>();
+		num = data.readShort();
+		for (i in 0...num)
+			yourOffer.push(data.readBoolean());
+
+		#if log_packets
+		trace(Global.gameSprite.lastUpdate, "TradeAccepted: myOffer=" + myOffer + ", yourOffer=" + yourOffer);
+		#end
+
+		// todo trade
+		// Global.gameSprite.hudView.tradeAccepted(tradeAccepted);
+	}
+
+	private static function handleTradeChanged(data: ByteArray) {
+		var offer = new Array<Bool>();
+		var num = data.readShort();
+		for (i in 0...num)
+			offer.push(data.readBoolean());
+
+		#if log_packets
+		trace(Global.gameSprite.lastUpdate, "TradeChanged: offer=" + offer);
+		#end
+
+		// todo trade
+		// Global.gameSprite.hudView.tradeChanged(tradeChanged);
+	}
+
+	private static function handleTradeDone(data: ByteArray) {
+		var code = data.readInt();
+		var description = data.readUTF();
+
+		#if log_packets
+		trace(Global.gameSprite.lastUpdate, "TradeDone: code=" + code + ", description=" + description);
+		#end
+
+		// todo trade
+		// Global.gameSprite.hudView.tradeDone();
+		Global.gameSprite.textBox.addText(description, 0x0000FF);
+	}
+
+	private static function handleTradeRequested(data: ByteArray) {
+		var name = data.readUTF();
+
+		#if log_packets
+		trace(Global.gameSprite.lastUpdate, "TradeRequested: name=" + name);
+		#end
+
+		// Global.gameSprite.interactPanel.setOverride(new TradeRequestPanel(Global.gameSprite, name));
+		Global.gameSprite.textBox.addText(name + " wants to " + "trade with you.  Type \"/trade " + name + "\" to trade.", 0x0000FF);
+	}
+
+	private static function handleTradeStart(data: ByteArray) {
+		var myItems = new Array<TradeItem>();
+		for (i in 0...data.readShort())
+			myItems.push({
+				item: data.readInt(),
+				slotType: data.readInt(),
+				tradeable: data.readBoolean(),
+				included: data.readBoolean()
+			});
+
+		var yourName = data.readUTF();
+		var yourItems = new Array<TradeItem>();
+		for (i in 0...data.readShort())
+			yourItems.push({
+				item: data.readInt(),
+				slotType: data.readInt(),
+				tradeable: data.readBoolean(),
+				included: data.readBoolean()
+			});
+
+		#if log_packets
+		trace(Global.gameSprite.lastUpdate, "TradeStart: myItems=" + myItems + ", yourName=" + yourName + ", yourItems=" + yourItems);
+		#end
+
+		// todo trade
+		// Global.gameSprite.hudView.startTrade(Global.gameSprite_, tradeStart);
+	}
+
+	private static function handleUpdate(data: ByteArray) {
+		for (i in 0...data.readShort()) {
+			var x = data.readShort();
+			var y = data.readShort();
+			var tileType = data.readUnsignedShort();
+			Global.gameSprite.map.setGroundTile(x, y, tileType);
+			Global.gameSprite.miniMap.setGroundTile(x, y, tileType);
+		}
+
+		for (i in 0...data.readShort())
+			Global.gameSprite.map.removeObj(data.readInt());
+
+		for (i in 0...data.readShort()) {
+			var objType = data.readUnsignedShort();
+			var objId = data.readInt();
+			var x = data.readFloat();
+			var y = data.readFloat();
+
+			var map = Global.gameSprite.map;
+			var go = ObjectLibrary.getObjectFromType(objType);
+			go?.setObjectId(objId);
+
+			for (j in 0...data.readShort())
+				parseStat(go, data.readUnsignedByte(), data);
+
+			if (go == null) {
+				trace('Could not find Update GameObject: objId=$objId, x=$x, y=$y');
+				continue;
+			}
+
+			map.addGameObject(go, x, y);
+			if (go.props.isPlayer) {
+				var newPlayer = cast(go, Player);
+				setPlayerSkinTemplate(newPlayer, 0);
+				if (newPlayer.objectId == playerId) {
+					player = newPlayer;
+					map.player = newPlayer;
+					Global.gameSprite.setFocus(newPlayer);
+				}
+			}
+
+			if (go.props.staticObj && go.props.occupySquare && !go.props.noMiniMap)
+				Global.gameSprite.miniMap.setGameObjectTile(Std.int(go.mapX), Std.int(go.mapY), go);
+		}
+
+		updateAck();
+
+		#if log_packets
+		trace(Global.gameSprite.lastUpdate, "Update");
+		#end
 	}
 
 	private static function updateAck() {
@@ -1562,27 +1673,27 @@ class NetworkHandler {
 
 	public static function escape() {
 		if (playerId == -1)
-            return;
-        if (Global.gameSprite.map.mapName == "Hub") {
-            #if log_packets
-            trace(Global.gameSprite.lastUpdate, "Escape -> Already in Hub");
-            #end
-            return;
-        }
-        if (Global.gameSprite.fromEditor) {
-            #if log_packets
-            trace(Global.gameSprite.lastUpdate, "Escape (Map Editor)");
-            #end
-            disconnect();
-            return;
-        }
-        Camera.mapX = Global.gameSprite.map.player.mapX = -1;
-        Camera.mapY = Global.gameSprite.map.player.mapY = -1;
-        Global.gameSprite.disconnect();
-        sendPacket(C2SPacketId.Escape);
-        #if log_packets
-        trace(Global.gameSprite.lastUpdate, "Escape");
-        #end
+			return;
+		if (Global.gameSprite.map.mapName == "Hub") {
+			#if log_packets
+			trace(Global.gameSprite.lastUpdate, "Escape -> Already in Hub");
+			#end
+			return;
+		}
+		if (Global.gameSprite.fromEditor) {
+			#if log_packets
+			trace(Global.gameSprite.lastUpdate, "Escape (Map Editor)");
+			#end
+			disconnect();
+			return;
+		}
+		Camera.mapX = Global.gameSprite.map.player.mapX = -1;
+		Camera.mapY = Global.gameSprite.map.player.mapY = -1;
+		Global.gameSprite.disconnect();
+		sendPacket(C2SPacketId.Escape);
+		#if log_packets
+		trace(Global.gameSprite.lastUpdate, "Escape");
+		#end
 	}
 
 	public static function joinGuild(guildName: String) {
@@ -1995,9 +2106,9 @@ class NetworkHandler {
 					return;
 
 				cast(go, Player).crowns = crowns;
-				
+
 			case SellablePrice:
-                var price = data.readUnsignedShort();
+				var price = data.readUnsignedShort();
 			default:
 				trace('Unhandled stat: type=${statType}');
 		}
