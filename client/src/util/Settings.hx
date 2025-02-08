@@ -27,7 +27,7 @@ class Settings {
 	public static inline var SERVER_CHAT_NAME = "";
 	public static inline var TERMS_OF_USE_URL = "https://to.do/tos";
 	public static inline var PRIVACY_POLICY_URL = "https://to.do/privacy";
-	public static inline var SETTINGS_VERSION: UInt8 = 1;
+	public static inline var SETTINGS_VERSION: UInt8 = 2;
 
 	public static var moveLeft = KeyCode.A;
 	public static var moveRight = KeyCode.D;
@@ -50,10 +50,7 @@ class Settings {
 	public static var guildChat = KeyCode.G;
 	public static var switchTabs = KeyCode.B;
 	public static var walk = KeyCode.Shift;
-	public static var ability1 = KeyCode.Number1;
-	public static var ability2 = KeyCode.Number2;
-	public static var ability3 = KeyCode.Number3;
-	public static var ultimateAbility = KeyCode.Number4;
+	public static var ability = KeyCode.Space;
 	public static var playMusic = true;
 	public static var playSfx = true;
 	public static var playWepSfx = true;
@@ -114,10 +111,7 @@ class Settings {
 				glowType = o.readByte();
 				savedEmail = o.readString(o.readUInt16());
 				perfStatsOpen = o.readByte() == 1 ? true : false;
-				ability1 = o.readByte();
-				ability2 = o.readByte();
-				ability3 = o.readByte();
-				ultimateAbility = o.readByte();
+				ability = o.readByte();
 				o.close();
 			}
 		} catch (e) {
@@ -166,10 +160,7 @@ class Settings {
 			w.writeUInt16(savedEmail.length);
 			w.writeString(savedEmail);
 			w.writeByte(perfStatsOpen == true ? 1 : 0);
-			w.writeByte(ability1);
-			w.writeByte(ability2);
-			w.writeByte(ability3);
-			w.writeByte(ultimateAbility);
+			w.writeByte(ability);
 			w.close();
 		} catch (e) {
 			trace('Settings save failed: $e');
@@ -208,10 +199,7 @@ class Settings {
 		selectedCursor = 3;
 		glowType = GlowType.None;
 		perfStatsOpen = false;
-		ability1 = KeyCode.Number1;
-		ability2 = KeyCode.Number2;
-		ability3 = KeyCode.Number3;
-		ultimateAbility = KeyCode.Number4;
+		ability = KeyCode.Space;
 		// e-mail is intentionally missing from here
 
 		Main.refreshCursor();

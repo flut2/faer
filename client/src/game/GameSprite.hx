@@ -3,17 +3,12 @@ package game;
 import util.TextureRedrawer;
 import ui.tooltip.StatToolTip;
 import openfl.text.TextFormatAlign;
-import ui.tooltip.AbilityToolTip;
-import objects.ObjectLibrary;
 import openfl.events.MouseEvent;
 import openfl.display.BlendMode;
 import util.AssetLibrary;
-import openfl.display.Shape;
 import openfl.display.BitmapData;
-import lime.tools.AssetEncoding;
 import openfl.Assets;
 import openfl.display.Bitmap;
-import util.Utils.MathUtil;
 import util.Utils.StringUtils;
 import util.Settings;
 #if !disable_rpc
@@ -22,8 +17,6 @@ import hxdiscord_rpc.Discord;
 #end
 import map.Camera;
 import network.NetworkHandler;
-import openfl.display.OpenGLRenderer;
-import openfl.events.RenderEvent;
 import util.NativeTypes;
 import lime.system.System;
 import screens.CharacterSelectionScreen;
@@ -130,14 +123,6 @@ class GameSprite extends Sprite {
 
 	public var isGameStarted = false;
 
-	private var ability1Container: Sprite;
-	private var ability1Tooltip: AbilityToolTip;
-	private var ability2Container: Sprite;
-	private var ability2Tooltip: AbilityToolTip;
-	private var ability3Container: Sprite;
-	private var ability3Tooltip: AbilityToolTip;
-	private var ultimateAbilityContainer: Sprite;
-	private var ultimateAbilityTooltip: AbilityToolTip;
 	private var levelText: SimpleText;
 	private var xpBarContainer: Sprite;
 	private var xpBar: Bitmap;
@@ -405,15 +390,6 @@ class GameSprite extends Sprite {
 		this.xpBarContainer.x = this.decor.x + 36 + (this.statsOpen ? (this.statsDecorTex.width - this.baseDecorTex.width) / 2 : 0);
 		this.xpBarContainer.y = this.decor.y + 47;
 
-		this.ability1Container.x = this.decor.x + 37 + (this.statsOpen ? (this.statsDecorTex.width - this.baseDecorTex.width) / 2 : 0);
-		this.ability1Container.y = this.decor.y + 64;
-		this.ability2Container.x = this.ability1Container.x + 44;
-		this.ability2Container.y = this.decor.y + 64;
-		this.ability3Container.x = this.ability2Container.x + 44;
-		this.ability3Container.y = this.decor.y + 64;
-		this.ultimateAbilityContainer.x = this.ability3Container.x + 44;
-		this.ultimateAbilityContainer.y = this.decor.y + 64;
-
 		this.strView.x = this.decor.x + 32;
 		this.strView.y = this.decor.y + 116;
 
@@ -547,8 +523,6 @@ class GameSprite extends Sprite {
 			// this.map.dispose();
 			// this.miniMap.dispose();
 			Projectile.disposeBullId();
-
-			resetAbilitiesUI();
 		}
 	}
 
@@ -594,27 +568,6 @@ class GameSprite extends Sprite {
 				+ (32 - this.levelText.width) / 2
 				+ (this.statsOpen ? (this.statsDecorTex.width - this.baseDecorTex.width) / 2 : 0);
 			this.levelText.y = this.decor.y + 30 + (32 - this.levelText.height) / 2;
-		}
-
-		if (this.ability1Container != null) {
-			this.ability1Container.x = this.decor.x + 37 + (this.statsOpen ? (this.statsDecorTex.width - this.baseDecorTex.width) / 2 : 0);
-			this.ability1Container.y = this.decor.y + 64;
-
-			if (this.ability2Container != null) {
-				this.ability2Container.x = this.ability1Container.x + 44;
-				this.ability2Container.y = this.decor.y + 64;
-
-				if (this.ability3Container != null) {
-					this.ability3Container.x = this.ability2Container.x + 44;
-					this.ability3Container.y = this.decor.y + 64;
-
-					// love to see it
-					if (this.ultimateAbilityContainer != null) {
-						this.ultimateAbilityContainer.x = this.ability3Container.x + 44;
-						this.ultimateAbilityContainer.y = this.decor.y + 64;
-					}
-				}
-			}
 		}
 
 		if (this.statsOpen) {
@@ -669,20 +622,6 @@ class GameSprite extends Sprite {
 
 		if (this.textBox != null)
 			this.textBox.y = Math.max(0, Main.stageHeight - this.textBox.height);
-	}
-
-	private function resetAbilitiesUI() {
-		if (this.ability1Container != null && contains(this.ability1Container))
-			removeChild(this.ability1Container);
-
-		if (this.ability2Container != null && contains(this.ability2Container))
-			removeChild(this.ability2Container);
-
-		if (this.ability3Container != null && contains(this.ability3Container))
-			removeChild(this.ability3Container);
-
-		if (this.ultimateAbilityContainer != null && contains(this.ultimateAbilityContainer))
-			removeChild(this.ultimateAbilityContainer);
 	}
 
 	private function updatePlayerUI(player: Player) {
@@ -759,46 +698,6 @@ class GameSprite extends Sprite {
 		this.prcView.draw(player.piercing, player.piercingBoost, player.piercingMax);
 	}
 
-	private function onAbility1RollOver(_: MouseEvent) {
-		this.ability1Tooltip.attachToTarget(this.ability1Container);
-		stage.addChild(this.ability1Tooltip);
-	}
-
-	private function onAbility1RollOut(_: MouseEvent) {
-		this.ability1Tooltip.detachFromTarget();
-		stage.removeChild(this.ability1Tooltip);
-	}
-
-	private function onAbility2RollOver(_: MouseEvent) {
-		this.ability2Tooltip.attachToTarget(this.ability2Container);
-		stage.addChild(this.ability2Tooltip);
-	}
-
-	private function onAbility2RollOut(_: MouseEvent) {
-		this.ability2Tooltip.detachFromTarget();
-		stage.removeChild(this.ability2Tooltip);
-	}
-
-	private function onAbility3RollOver(_: MouseEvent) {
-		this.ability3Tooltip.attachToTarget(this.ability3Container);
-		stage.addChild(this.ability3Tooltip);
-	}
-
-	private function onAbility3RollOut(_: MouseEvent) {
-		this.ability3Tooltip.detachFromTarget();
-		stage.removeChild(this.ability3Tooltip);
-	}
-
-	private function onUltimateAbilityRollOver(_: MouseEvent) {
-		this.ultimateAbilityTooltip.attachToTarget(this.ultimateAbilityContainer);
-		stage.addChild(this.ultimateAbilityTooltip);
-	}
-
-	private function onUltimateAbilityRollOut(_: MouseEvent) {
-		this.ultimateAbilityTooltip.detachFromTarget();
-		stage.removeChild(this.ultimateAbilityTooltip);
-	}
-
 	private function onEnterFrame(event: Event) {
 		if (!this.isGameStarted)
 			return;
@@ -857,52 +756,6 @@ class GameSprite extends Sprite {
 					this.defView.setBreakdownText("Being a " + className + " grants you $base/$max Defense\nYou receive $boost Defense from Boosts");
 					this.staView.setBreakdownText("Being a " + className + " grants you $base/$max Stamina\nYou receive $boost Stamina from Boosts");
 					this.prcView.setBreakdownText("Being a " + className + " grants you $base/$max Piercing\nYou receive $boost Piercing from Boosts");
-
-					var abilProps = ObjectLibrary.typeToAbilityProps.get(player.objectType);
-
-					var abilProps1 = abilProps.ability1;
-					this.ability1Container = new Sprite();
-					this.ability1Container.x = this.decor.x + 37 + (this.statsOpen ? (this.statsDecorTex.width - this.baseDecorTex.width) / 2 : 0);
-					this.ability1Container.y = this.decor.y + 64;
-					this.ability1Container.addChild(new Bitmap(abilProps1.icon));
-					this.ability1Container.addEventListener(MouseEvent.ROLL_OVER, this.onAbility1RollOver);
-					this.ability1Container.addEventListener(MouseEvent.ROLL_OUT, this.onAbility1RollOut);
-					addChild(this.ability1Container);
-					this.ability1Tooltip = new AbilityToolTip(abilProps1.icon, abilProps1.manaCost, abilProps1.healthCost, abilProps1.cooldown,
-						abilProps1.description, abilProps1.name, '1');
-
-					var abilProps2 = abilProps.ability2;
-					this.ability2Container = new Sprite();
-					this.ability2Container.x = this.ability1Container.x + 44;
-					this.ability2Container.y = this.decor.y + 64;
-					this.ability2Container.addChild(new Bitmap(abilProps2.icon));
-					this.ability2Container.addEventListener(MouseEvent.ROLL_OVER, this.onAbility2RollOver);
-					this.ability2Container.addEventListener(MouseEvent.ROLL_OUT, this.onAbility2RollOut);
-					addChild(this.ability2Container);
-					this.ability2Tooltip = new AbilityToolTip(abilProps2.icon, abilProps2.manaCost, abilProps2.healthCost, abilProps2.cooldown,
-						abilProps2.description, abilProps2.name, '2');
-
-					var abilProps3 = abilProps.ability3;
-					this.ability3Container = new Sprite();
-					this.ability3Container.x = this.ability2Container.x + 44;
-					this.ability3Container.y = this.decor.y + 64;
-					this.ability3Container.addChild(new Bitmap(abilProps3.icon));
-					this.ability3Container.addEventListener(MouseEvent.ROLL_OVER, this.onAbility3RollOver);
-					this.ability3Container.addEventListener(MouseEvent.ROLL_OUT, this.onAbility3RollOut);
-					addChild(this.ability3Container);
-					this.ability3Tooltip = new AbilityToolTip(abilProps3.icon, abilProps3.manaCost, abilProps3.healthCost, abilProps3.cooldown,
-						abilProps3.description, abilProps3.name, '3');
-
-					var ultimateAbilProps = abilProps.ultimateAbility;
-					this.ultimateAbilityContainer = new Sprite();
-					this.ultimateAbilityContainer.x = this.ability3Container.x + 44;
-					this.ultimateAbilityContainer.y = this.decor.y + 64;
-					this.ultimateAbilityContainer.addChild(new Bitmap(ultimateAbilProps.icon));
-					this.ultimateAbilityContainer.addEventListener(MouseEvent.ROLL_OVER, this.onUltimateAbilityRollOver);
-					this.ultimateAbilityContainer.addEventListener(MouseEvent.ROLL_OUT, this.onUltimateAbilityRollOut);
-					addChild(this.ultimateAbilityContainer);
-					this.ultimateAbilityTooltip = new AbilityToolTip(ultimateAbilProps.icon, ultimateAbilProps.manaCost, ultimateAbilProps.healthCost,
-						ultimateAbilProps.cooldown, ultimateAbilProps.description, ultimateAbilProps.name, '4');
 
 					this.inventoryDrawn = true;	
 					this.uiInited = true;

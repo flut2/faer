@@ -283,8 +283,6 @@ public partial class Player : Character, IContainer, IPlayer {
             });
 
         Admin = client.Account.Admin ? 1 : 0;
-
-        LoadAbilities();
     }
 
     private byte[,] tiles;

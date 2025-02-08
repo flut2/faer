@@ -502,29 +502,12 @@ public enum AbilitySlotType : byte
     Ultimate = 3
 }
 
-public class AbilityDesc
-{
-    public readonly AbilityType AbilityType;
-    public readonly int ManaCost;
-    public readonly int HealthCost;
-    public readonly int CooldownMS;
-
-    public AbilityDesc(XElement e)
-    {
-        AbilityType = (AbilityType)Enum.Parse(typeof(AbilityType), e.GetValue("Name", "Unknown").Replace(" ", ""), true);
-        ManaCost = e.GetValue<int>("ManaCost");
-        HealthCost = e.GetValue<int>("HealthCost");
-        CooldownMS = e.GetValue<int>("Cooldown") * 1000;
-    }
-}
-
 public class PlayerDesc : ObjectDesc
 {
     public readonly int[] SlotTypes;
     public readonly ushort[] Equipment;
     public readonly Stat[] Stats;
     public readonly UnlockClass Unlock;
-    public readonly AbilityDesc[] Abilities;
 
     public PlayerDesc(ushort type, XElement e) : base(type, e)
     {
@@ -535,14 +518,6 @@ public class PlayerDesc : ObjectDesc
             Stats[i] = new Stat(i, e);
         if (e.HasElement("UnlockLevel") || e.HasElement("UnlockCost"))
             Unlock = new UnlockClass(e);
-
-        Abilities = new AbilityDesc[]
-        {
-            new(e.Element("Ability1")),
-            new(e.Element("Ability2")),
-            new(e.Element("Ability3")),
-            new(e.Element("UltimateAbility"))
-        };
     }
 }
 
