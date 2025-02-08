@@ -9,9 +9,11 @@ import openfl.text.TextFormatAlign;
 import openfl.filters.DropShadowFilter;
 import openfl.Assets;
 import openfl.display.Bitmap;
-import hxdiscord_rpc.Discord;
 import util.Settings;
+#if !disable_rpc
+import hxdiscord_rpc.Discord;
 import hxdiscord_rpc.Types.DiscordRichPresence;
+#end
 import openfl.events.Event;
 import openfl.display.Sprite;
 

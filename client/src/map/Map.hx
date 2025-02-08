@@ -984,8 +984,8 @@ class Map {
 										uValue = wallBackfaceU;
 										vValue = wallBackfaceV;
 									} else {
-										uValue = obj.uValue;
-										vValue = obj.vValue;
+										uValue = obj.uValue + Main.PADDING / Main.ATLAS_WIDTH;
+										vValue = obj.vValue + Main.PADDING / Main.ATLAS_HEIGHT;
 									}
 
 									this.drawGeneric(-xScaledCos
@@ -1029,8 +1029,8 @@ class Map {
 										uValue = wallBackfaceU;
 										vValue = wallBackfaceV;
 									} else {
-										uValue = obj.uValue;
-										vValue = obj.vValue;
+										uValue = obj.uValue + Main.PADDING / Main.ATLAS_WIDTH;
+										vValue = obj.vValue + Main.PADDING / Main.ATLAS_HEIGHT;
 									}
 
 									this.drawGeneric(-xScaledCos
@@ -1067,8 +1067,8 @@ class Map {
 										uValue = wallBackfaceU;
 										vValue = wallBackfaceV;
 									} else {
-										uValue = obj.uValue;
-										vValue = obj.vValue;
+										uValue = obj.uValue + Main.PADDING / Main.ATLAS_WIDTH;
+										vValue = obj.vValue + Main.PADDING / Main.ATLAS_HEIGHT;
 									}
 
 									this.drawGeneric(-xScaledCos
@@ -1104,8 +1104,8 @@ class Map {
 										uValue = wallBackfaceU;
 										vValue = wallBackfaceV;
 									} else {
-										uValue = obj.uValue;
-										vValue = obj.vValue;
+										uValue = obj.uValue + Main.PADDING / Main.ATLAS_WIDTH;
+										vValue = obj.vValue + Main.PADDING / Main.ATLAS_HEIGHT;
 									}
 
 									this.drawGeneric(xScaledCos
@@ -1157,7 +1157,7 @@ class Map {
 								+ xBaseTop,
 								-yScaledSin
 								+ yScaledCos
-								+ yBaseTop, obj.topUValue, obj.topVValue, size, size, 0, 0, 0,
+								+ yBaseTop, obj.topUValue + Main.PADDING / Main.ATLAS_WIDTH, obj.topVValue + Main.PADDING / Main.ATLAS_HEIGHT, size, size, 0, 0, 0,
 								1.0, 0.1);
 						}
 					case "Player":
