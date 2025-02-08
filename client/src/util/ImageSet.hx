@@ -1,5 +1,6 @@
 package util;
 
+import haxe.Exception;
 import openfl.display.BitmapData;
 import openfl.geom.Point;
 import openfl.geom.Rectangle;

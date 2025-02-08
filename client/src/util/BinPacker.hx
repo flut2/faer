@@ -73,29 +73,30 @@ final class BinPacker {
 
 	private final function splitFreeNode(freeNode: Rect, usedNode: Rect) {
 		if (usedNode.x >= freeNode.x + freeNode.width
-			|| usedNode.x + usedNode.width <= freeNode.x
-			|| usedNode.y >= freeNode.y + freeNode.height
-			|| usedNode.y + usedNode.height <= freeNode.y)
-			return false;
-
-		if (usedNode.x < freeNode.x + freeNode.width && usedNode.x + usedNode.width > freeNode.x) {
-			if (usedNode.y > freeNode.y && usedNode.y < freeNode.y + freeNode.height)
-				freeRectangles.push(new Rect(freeNode.x, freeNode.y, freeNode.width, usedNode.y - freeNode.y));
-
-			if (usedNode.y + usedNode.height < freeNode.y + freeNode.height)
-				freeRectangles.push(new Rect(freeNode.x, usedNode.y + usedNode.height, freeNode.width, freeNode.y + freeNode.height - (usedNode.y + usedNode.height)));
-		}
-
-		if (usedNode.y < freeNode.y + freeNode.height && usedNode.y + usedNode.height > freeNode.y) {
-			if (usedNode.x > freeNode.x && usedNode.x < freeNode.x + freeNode.width)
-				freeRectangles.push(new Rect(freeNode.x, freeNode.y, usedNode.x - freeNode.x, freeNode.height));
-
-			if (usedNode.x + usedNode.width < freeNode.x + freeNode.width) 
-				freeRectangles.push(new Rect(usedNode.x + usedNode.width, freeNode.y, freeNode.x + freeNode.width - (usedNode.x + usedNode.width),
-					freeNode.height));
-		}
-
-		return true;
+            || usedNode.x + usedNode.width <= freeNode.x
+            || usedNode.y >= freeNode.y + freeNode.height
+            || usedNode.y + usedNode.height <= freeNode.y)
+            return false;
+    
+        var left = Math.max(freeNode.x, usedNode.x);
+        var right = Math.min(freeNode.x + freeNode.width, usedNode.x + usedNode.width);
+    
+        if (usedNode.y > freeNode.y)
+           freeRectangles.push(new Rect(freeNode.x, freeNode.y, freeNode.width, usedNode.y - freeNode.y));
+        
+        if (usedNode.y + usedNode.height < freeNode.y + freeNode.height)
+            freeRectangles.push(new Rect(freeNode.x, usedNode.y + usedNode.height, freeNode.width, freeNode.y + freeNode.height - (usedNode.y + usedNode.height)));
+    
+        var top = Math.max(freeNode.y, usedNode.y);
+        var bottom = Math.min(freeNode.y + freeNode.height, usedNode.y + usedNode.height);
+    
+        if (usedNode.x > freeNode.x)
+            freeRectangles.push(new Rect(freeNode.x, top, usedNode.x - freeNode.x, bottom - top));
+        
+        if (usedNode.x + usedNode.width < freeNode.x + freeNode.width)
+			freeRectangles.push(new Rect(usedNode.x + usedNode.width, top, freeNode.x + freeNode.width - (usedNode.x + usedNode.width), bottom - top));
+    
+        return true;
 	}
 
 	private final function pruneFreeList() {
