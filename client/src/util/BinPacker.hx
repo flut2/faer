@@ -18,6 +18,9 @@ final class Rect {
 }
 
 final class BinPacker {
+	private static inline final MIN_WIDTH: Float32 = 8;
+	private static inline final MIN_HEIGHT: Float32 = 8;
+
 	public final binWidth: Float32;
 	public final binHeight: Float32;
 	public final freeRectangles: Array<Rect>;
@@ -73,30 +76,35 @@ final class BinPacker {
 
 	private final function splitFreeNode(freeNode: Rect, usedNode: Rect) {
 		if (usedNode.x >= freeNode.x + freeNode.width
-            || usedNode.x + usedNode.width <= freeNode.x
-            || usedNode.y >= freeNode.y + freeNode.height
-            || usedNode.y + usedNode.height <= freeNode.y)
-            return false;
-    
-        var left = Math.max(freeNode.x, usedNode.x);
-        var right = Math.min(freeNode.x + freeNode.width, usedNode.x + usedNode.width);
-    
-        if (usedNode.y > freeNode.y)
-           freeRectangles.push(new Rect(freeNode.x, freeNode.y, freeNode.width, usedNode.y - freeNode.y));
-        
-        if (usedNode.y + usedNode.height < freeNode.y + freeNode.height)
-            freeRectangles.push(new Rect(freeNode.x, usedNode.y + usedNode.height, freeNode.width, freeNode.y + freeNode.height - (usedNode.y + usedNode.height)));
-    
-        var top = Math.max(freeNode.y, usedNode.y);
-        var bottom = Math.min(freeNode.y + freeNode.height, usedNode.y + usedNode.height);
-    
-        if (usedNode.x > freeNode.x)
-            freeRectangles.push(new Rect(freeNode.x, top, usedNode.x - freeNode.x, bottom - top));
-        
-        if (usedNode.x + usedNode.width < freeNode.x + freeNode.width)
-			freeRectangles.push(new Rect(usedNode.x + usedNode.width, top, freeNode.x + freeNode.width - (usedNode.x + usedNode.width), bottom - top));
-    
-        return true;
+			|| usedNode.x + usedNode.width <= freeNode.x
+			|| usedNode.y >= freeNode.y + freeNode.height
+			|| usedNode.y + usedNode.height <= freeNode.y)
+			return false;
+
+		var left = Math.max(freeNode.x, usedNode.x);
+		var right = Math.min(freeNode.x + freeNode.width, usedNode.x + usedNode.width);
+
+		if (usedNode.y > freeNode.y)
+			if (freeNode.width >= MIN_WIDTH && usedNode.y - freeNode.y >= MIN_HEIGHT)
+				freeRectangles.push(new Rect(freeNode.x, freeNode.y, freeNode.width, usedNode.y - freeNode.y));
+
+		if (usedNode.y + usedNode.height < freeNode.y + freeNode.height)
+			if (freeNode.width >= MIN_WIDTH && freeNode.y + freeNode.height - (usedNode.y + usedNode.height) >= MIN_HEIGHT)
+				freeRectangles.push(new Rect(freeNode.x, usedNode.y + usedNode.height, freeNode.width,
+					freeNode.y + freeNode.height - (usedNode.y + usedNode.height)));
+
+		var top = Math.max(freeNode.y, usedNode.y);
+		var bottom = Math.min(freeNode.y + freeNode.height, usedNode.y + usedNode.height);
+
+		if (usedNode.x > freeNode.x)
+			if (usedNode.x - freeNode.x >= MIN_WIDTH && bottom - top >= MIN_HEIGHT)
+				freeRectangles.push(new Rect(freeNode.x, top, usedNode.x - freeNode.x, bottom - top));
+
+		if (usedNode.x + usedNode.width < freeNode.x + freeNode.width)
+			if (freeNode.x + freeNode.width - (usedNode.x + usedNode.width) >= MIN_WIDTH && bottom - top >= MIN_HEIGHT)
+				freeRectangles.push(new Rect(usedNode.x + usedNode.width, top, freeNode.x + freeNode.width - (usedNode.x + usedNode.width), bottom - top));
+
+		return true;
 	}
 
 	private final function pruneFreeList() {
