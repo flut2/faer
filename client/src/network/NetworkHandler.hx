@@ -798,6 +798,9 @@ class NetworkHandler {
 		Global.gameSprite.map.setProps(width, height, name, allowPlayerTeleport, bgLightColor, bgLightIntensity, dayLightIntensity, nightLightIntensity,
 			serverTimeOffset);
 
+		Camera.isJittering = false;
+		Camera.jitter = 0.0;
+
 		#if log_packets
 		trace(Global.gameSprite.lastUpdate,
 			"MapInfo: width="

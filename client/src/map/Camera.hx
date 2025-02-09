@@ -36,8 +36,8 @@ class Camera {
 	public static var maxDistSq: Float32 = 0.0;
 	public static var viewMatrix: Float32Array;
 
-	private static var isJittering = false;
-	private static var jitter: Float32 = 0.0;
+	public static var isJittering = false;
+	public static var jitter: Float32 = 0.0;
 
 	public static function init() {
 		clipRect = new Rectangle(-Main.stageWidth * 0.5, -Main.stageHeight * 0.5, Main.stageWidth, Main.stageHeight);
