@@ -59,21 +59,21 @@ public class Loot : List<ILootDef>
 
     public void Handle(Enemy enemy)
     {
-        if (enemy.Spawned) 
-            return;
+        // if (enemy.Spawned) 
+        //     return;
 
         var consideration = new List<LootDef>();
         var shared = new List<Item>();
         foreach (var i in this)
             i.Populate(enemy.Manager, enemy, null, Rand, consideration);
 
-        var dats = enemy.DamageCounter.GetPlayerData();
         foreach (var i in consideration)
-            if (Rand.NextDouble() < i.Probability && i.Item?.Untradable == false)
+            if (i.Item.BagType == 0 && Rand.NextDouble() < i.Probability)
                 shared.Add(i.Item);
         if (shared.Count > 0)
             AddBagToWorld(enemy, shared, new Player[0]);
 
+        var dats = enemy.DamageCounter.GetPlayerData();
         foreach (var dat in dats)
         {
             consideration.Clear();

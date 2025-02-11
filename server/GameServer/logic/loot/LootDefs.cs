@@ -208,7 +208,6 @@ public class ItemLoot : ILootDef
     public void Populate(RealmManager manager, Enemy enemy, Tuple<Player, int> playerDat,
         Random rand, IList<LootDef> lootDefs)
     {
-        if (playerDat != null) return;
         var dat = manager.Resources.GameData;
 
         var objType = dat.IdToObjectType[_item];
