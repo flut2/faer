@@ -6,7 +6,7 @@ import ui.itemgrids.itemtiles.InteractiveItemTile;
 import util.NativeTypes;
 
 class ContainerGrid extends ItemGrid {
-	private static inline var NUM_SLOTS = 8;
+	private static inline var NUM_SLOTS = 9;
 
 	private var tiles: Array<InteractiveItemTile>;
 
@@ -16,7 +16,7 @@ class ContainerGrid extends ItemGrid {
 		this.tiles = new Array<InteractiveItemTile>();
 		for (i in 0...NUM_SLOTS) {
 			tile = new InteractiveItemTile(i + indexOffset, this, true);
-			addToGrid(tile, 2, i);
+			addToGrid(tile, 2, i, 3);
 			this.tiles[i] = tile;
 		}
 	}

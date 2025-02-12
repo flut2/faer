@@ -12,8 +12,8 @@
 	  <Wander speed="0.5"/>
    	<Shoot radius="16" count="5" shootAngle="72" projectileIndex="0" cooldown="400"/>
    	<DropPortalOnDeath target="Crown Cove" probability="0.01"/>
-   	<ItemLoot item="Health Vial" probability="0.02"/>
-	  <ItemLoot item="Magic Vial" probability="0.02"/>
+   	<ItemLoot item="Health Vial" probability="2.0"/>
+	  <ItemLoot item="Magic Vial" probability="2.0"/>
 	</BehaviorEntry>
 	<BehaviorEntry id="Goblin Grunt">
 	  <Charge speed="1.33" range="9" cooldown="1000"/>

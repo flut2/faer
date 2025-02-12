@@ -26,7 +26,7 @@ public class Container : StaticObject, IContainer
         DbLink = dbLink;
 
         var node = Manager.Resources.GameData.ObjectTypeToElement[ObjectType];
-        SlotTypes = Utils.ResizeArray(node.Element("SlotTypes").Value.CommaToArray<int>(), 8);
+        SlotTypes = Utils.ResizeArray(node.Element("SlotTypes").Value.CommaToArray<int>(), 9);
         var eq = node.Element("Equipment");
         if (eq != null)
         {
@@ -65,7 +65,7 @@ public class Container : StaticObject, IContainer
         if (ObjectType == 0x0504) //Vault chest
             return;
             
-        if (Inventory.Count(i => i?.ObjectType != ushort.MaxValue) == 0)
+        if (!Inventory.Any(i => i != null && i.ObjectType != ushort.MaxValue))
             Owner?.LeaveWorld(this);
 
         base.Tick(time);

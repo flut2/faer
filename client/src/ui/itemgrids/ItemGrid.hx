@@ -34,7 +34,6 @@ class ItemGrid extends Sprite {
 		]
 	];
 	private static inline var padding = 4;
-	private static inline var rowLength = 6;
 
 	public var owner: GameObject;
 	public var curPlayer: Player;
@@ -198,7 +197,7 @@ class ItemGrid extends Sprite {
 
 	public function setItems(items: Array<Int32>, itemIndexOffset: Int32 = 0) {}
 
-	public function addToGrid(tile: ItemTile, numRows: Int, tileIndex: Int) {
+	public function addToGrid(tile: ItemTile, numRows: Int, tileIndex: Int, rowLength: Int) {
 		tile.drawBackground(this.disableBgDraw ? null : CutsByNum[numRows][tileIndex]);
 		tile.addEventListener(MouseEvent.ROLL_OVER, this.onTileHover);
 		tile.x = Std.int(tileIndex % rowLength) * (ItemTile.WIDTH + padding);

@@ -16,7 +16,7 @@ class InventoryGrid extends ItemGrid {
 		this.isBackpack = isBackpack;
 		for (i in 0...18) {
 			tile = new InventoryTile(i + indexOffset, this, interactive);
-			addToGrid(tile, 1, i);
+			addToGrid(tile, 1, i, 6);
 			this.tiles[i] = tile;
 		}
 	}
