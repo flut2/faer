@@ -199,7 +199,7 @@ class InputHandler {
 			Global.gameSprite.toggleStats();
 		} 
 		
-		if (keyCode == Settings.interact && Global.currentInteractiveTarget > 0)
+		if (keyCode == Settings.interact && Global.currentInteractiveTarget > 0 && Global.currentInteractiveClass == "Portal")
 			NetworkHandler.usePortal(Global.currentInteractiveTarget);
 
 		this.setPlayerMovement();

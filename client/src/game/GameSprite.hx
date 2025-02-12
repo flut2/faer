@@ -709,6 +709,7 @@ class GameSprite extends Sprite {
 
 			var minDist = 1.0;
 			var closestInteractive = -1;
+			var closestInteractiveClass = "Unknown";
 			var playerX = this.map.player.mapX;
 			var playerY = this.map.player.mapY;
 			for (go in this.map.gameObjects)
@@ -719,10 +720,12 @@ class GameSprite extends Sprite {
 					if (dist < minDist) {
 						minDist = dist;
 						closestInteractive = go.objectId;
+						closestInteractiveClass = go.objClass;
 					}
 				}
 
 			Global.currentInteractiveTarget = closestInteractive;
+			Global.currentInteractiveClass = closestInteractiveClass;
 
 			var player = this.map.player;
 			if (player != null) {

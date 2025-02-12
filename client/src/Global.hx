@@ -49,6 +49,7 @@ using util.Utils;
 
 final class Global {
 	public static var currentInteractiveTarget = 0;
+	public static var currentInteractiveClass = "Unknown";
 	public static var gameSprite: GameSprite;
 	public static var layers: Layers;
 
