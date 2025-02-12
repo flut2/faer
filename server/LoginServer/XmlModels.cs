@@ -245,7 +245,8 @@ internal class Account
     public bool Admin { get; private init; }
     public int Rank { get; private init; }
 
-    public int Credits { get; private init; }
+    public int Gold { get; private init; }
+    public int Gems { get; private init; }
     public int NextCharSlotPrice { get; private init; }
     public int CharSlotCurrency { get; private init; }
     public string MenuMusic { get; private init; }
@@ -273,7 +274,8 @@ internal class Account
             Admin = acc.Admin,
             Rank = acc.Rank,
                 
-            Credits = acc.Credits,
+            Gold = acc.Fame,
+            Gems = acc.Credits,
             NextCharSlotPrice = Program.Resources.Settings.CharacterSlotCost,
             CharSlotCurrency = Program.Resources.Settings.CharacterSlotCurrency,
             MenuMusic = Program.Resources.Settings.MenuMusic,
@@ -302,7 +304,8 @@ internal class Account
                 new XElement("Rank", Rank),
                 new XElement("LastSeen", LastSeen),
                 Banned ? new XElement("Banned", BanReasons).AddAttribute("liftTime", BanLiftTime) : null,
-                new XElement("Credits", Credits),
+                new XElement("Gold", Gold),
+                new XElement("Gems", Gems),
                 new XElement("NextCharSlotPrice", NextCharSlotPrice),
                 new XElement("CharSlotCurrency", CharSlotCurrency),
                 new XElement("MenuMusic", MenuMusic),

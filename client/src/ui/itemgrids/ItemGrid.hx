@@ -49,8 +49,7 @@ class ItemGrid extends Sprite {
 		this.curPlayer = currentPlayer;
 		this.indexOffset = itemIndexOffset;
 		this.disableBgDraw = disableBgDraw;
-		if (gridOwner == currentPlayer)
-			this.interactive = true;
+		this.interactive = true;
 
 		addEventListener(Event.ADDED_TO_STAGE, onAdded);
 	}

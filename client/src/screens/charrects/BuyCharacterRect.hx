@@ -48,7 +48,7 @@ class BuyCharacterRect extends CharacterRect {
 		this.priceText.x = (32 - this.priceText.width) / 2 + 282;
 		this.priceText.y = (14 - this.priceText.height) / 2 + 33;
 		addChild(this.priceText);
-		var bd = Global.playerModel.isNextCharSlotCurrencyGems() ? IconFactory.makeGold(20) : IconFactory.makeGems(20);
+		var bd = Global.playerModel.isNextCharSlotCurrencyGems() ? IconFactory.makeGems(20) : IconFactory.makeGold(20);
 		this.currency = new Bitmap(bd);
 		this.currency.x = width - 39;
 		this.currency.y = this.classNameText.y - 2;
