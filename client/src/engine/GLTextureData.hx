@@ -15,16 +15,16 @@ class GLTextureData {
 		this.width = tex.width;
 		this.height = tex.height;
 
-		var dataCopy = tex.image.data;
-		for (i in 0...Std.int(dataCopy.byteLength / 4)) {
-			var temp = dataCopy[i * 4];
-			dataCopy[i * 4] = dataCopy[i * 4 + 2];
-			dataCopy[i * 4 + 2] = temp;
-		}
+		// var dataCopy = tex.image.data;
+		// for (i in 0...Std.int(dataCopy.byteLength / 4)) {
+		// 	var temp = dataCopy[i * 4];
+		// 	dataCopy[i * 4] = dataCopy[i * 4 + 2];
+		// 	dataCopy[i * 4 + 2] = temp;
+		// }
 
 		this.texture = GL.createTexture();
 		GL.bindTexture(GL.TEXTURE_2D, this.texture);
-		GL.texImage2D(GL.TEXTURE_2D, 0, GL.RGBA, w, h, 0, GL.RGBA, GL.UNSIGNED_BYTE, dataCopy);
+		GL.texImage2D(GL.TEXTURE_2D, 0, GL.RGBA, w, h, 0, GL.RGBA, GL.UNSIGNED_BYTE, tex.image.data);
 		GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MIN_FILTER, filterType);
 		GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MAG_FILTER, filterType);
 		GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_S, GL.CLAMP_TO_EDGE);

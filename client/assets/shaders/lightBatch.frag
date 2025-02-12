@@ -14,6 +14,10 @@ uniform sampler2D sampler;
 
 void main() {
     vec4 pixel = texture(sampler, data.uv);
+    float temp = pixel.r;
+    pixel.r = pixel.b;
+    pixel.b = temp;
+    
     if (pixel.a == 0.0)
         discard;
 

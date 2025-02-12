@@ -31,5 +31,5 @@ void main() {
     if (data.bottomBlendUV.x >= 0 && texture(sampler, bottomMaskUV + data.baseUV).a == 1)
         result = texture(sampler, data.bottomBlendUV + data.baseUV);
     
-    resultColor = result;    
+    resultColor = vec4(result.b, result.g, result.r, result.a);
 }
