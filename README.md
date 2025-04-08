@@ -3,7 +3,7 @@
 **Note:** 
 This source exists for people with developed Flash projects, as the transition to Haxe is much easier.
 
-If you're starting a project from scratch you should use the [Kingdom source code](https://github.com/flut2/kingdom) instead.
+If you're starting a project from scratch you should use the [Eclipse source code](https://github.com/flut2/eclipse) instead.
 
 **Requirements:**
 - A Redis-compatible server running
